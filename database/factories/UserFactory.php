@@ -27,7 +27,9 @@ class UserFactory extends Factory
             'name' => fake()->name(),
             'email' => fake()->unique()->safeEmail(),
             'email_verified_at' => now(),
-            'password' => static::$password ??= Hash::make('password'),
+            // The `User` model uses the `password` cast => 'hashed', so factories
+            // should provide the plain password and allow the model to hash it.
+            'password' => static::$password ??= 'password',
             'remember_token' => Str::random(10),
         ];
     }

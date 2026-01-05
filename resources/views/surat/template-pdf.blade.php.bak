@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Surat {{ $surat->jenis_surat }}</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 40px;
+            line-height: 1.6;
+            color: #333;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 3px solid #000;
+            padding-bottom: 20px;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 24px;
+            text-transform: uppercase;
+        }
+        .header p {
+            margin: 5px 0;
+            font-size: 12px;
+        }
+        .letter-number {
+            text-align: right;
+            margin-bottom: 20px;
+            font-weight: bold;
+        }
+        .content {
+            margin: 30px 0;
+            text-align: justify;
+        }
+        .content p {
+            margin-bottom: 15px;
+        }
+        .data-section {
+            margin: 20px 0;
+            padding: 15px;
+            background-color: #f9f9f9;
+            border-left: 4px solid #2c3e50;
+        }
+        .data-row {
+            display: flex;
+            margin-bottom: 8px;
+            font-size: 13px;
+        }
+        .data-label {
+            width: 200px;
+            font-weight: bold;
+        }
+        .data-value {
+            flex: 1;
+            word-break: break-word;
+        }
+        .signature-section {
+            margin-top: 50px;
+            display: flex;
+            justify-content: space-between;
+        }
+        .signature-box {
+            text-align: center;
+            width: 45%;
+        }
+        .signature-line {
+            border-top: 1px solid #000;
+            margin-top: 50px;
+            padding-top: 5px;
+        }
+        .footer {
+            margin-top: 40px;
+            text-align: center;
+            font-size: 11px;
+            color: #666;
+            border-top: 1px solid #ccc;
+            padding-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>{{ $village->nama_desa ?? 'Desa' }}</h1>
+        <p>Kabupaten: {{ $village->kabupaten ?? '—' }}</p>
+        <p>Provinsi: {{ $village->provinsi ?? '—' }}</p>
+    </div>
+
+    <div class="letter-number">
+        Nomor: {{ $surat->id }}/Surat/{{ now()->format('m/Y') }}
+    </div>
+
+    <div style="text-align: center; margin-bottom: 30px; font-weight: bold;">
+        {{ strtoupper($surat->jenis_surat) }}
+    </div>
+
+    <div class="data-section">
+        <h3 style="margin-top: 0; text-transform: uppercase;">Data Pemohon</h3>
+        <div class="data-row">
+            <div class="data-label">Nama</div>
+            <div class="data-value">: {{ $surat->nama_pemohon ?? '—' }}</div>
+        </div>
+        <div class="data-row">
+            <div class="data-label">NIK</div>
+            <div class="data-value">: {{ $surat->nik ?? '—' }}</div>
+        </div>
+        <div class="data-row">
+            <div class="data-label">No. HP</div>
+            <div class="data-value">: {{ $surat->no_hp ?? '—' }}</div>
+        </div>
+        <div class="data-row">
+            <div class="data-label">Tanggal Pengajuan</div>
+            <div class="data-value">: {{ $surat->created_at?->format('d-m-Y H:i') ?? '—' }}</div>
+        </div>
+    </div>
+
+    @if ($surat->keterangan)
+    <div class="data-section">
+        <h3 style="margin-top: 0; text-transform: uppercase;">Keterangan</h3>
+        <p>{{ $surat->keterangan }}</p>
+    </div>
+    @endif
+
+    <div class="content">
+        <p>
+            Dengan ini menerangkan bahwa orang yang tersebut di atas adalah benar penduduk {{ $village->nama_desa ?? 'Desa' }}
+            dan berdasarkan data yang ada di administrasi desa, data tersebut adalah sah dan dapat digunakan sebagaimana mestinya.
+        </p>
+        <p>
+            Demikian surat keterangan ini diberikan untuk keperluan {{ strtolower($surat->jenis_surat) }}.
+        </p>
+    </div>
+
+    <div class="signature-section">
+        <div class="signature-box">
+            <p>Diajukan Oleh,</p>
+            <div class="signature-line">
+                {{ $surat->nama_pemohon ?? '—' }}
+            </div>
+        </div>
+        <div class="signature-box">
+            <p>Kepala {{ $village->nama_desa ?? 'Desa' }},</p>
+            <div class="signature-line">
+                &nbsp;
+            </div>
+        </div>
+    </div>
+
+    <div class="footer">
+        <p>Surat ini digenerate otomatis pada {{ now()->format('d-m-Y H:i:s') }}</p>
+        <p>Sistem Informasi Manajemen Desa (SIM Desa)</p>
+    </div>
+</body>
+</html>
