@@ -55,15 +55,16 @@
                         @php
                             $fileExt = strtolower(pathinfo($pengaduan->lampiran, PATHINFO_EXTENSION));
                             $imageMimes = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+                            $lampiranPath = 'storage/' . $pengaduan->lampiran;
                         @endphp
 
                         @if(in_array($fileExt, $imageMimes))
                             <div class="mb-4">
-                                <img src="{{ asset($pengaduan->lampiran) }}" alt="Lampiran" class="max-w-full max-h-96 rounded shadow">
+                                <img src="{{ asset($lampiranPath) }}" alt="Lampiran" class="max-w-full max-h-96 rounded shadow">
                             </div>
                         @endif
 
-                        <a href="{{ asset($pengaduan->lampiran) }}" download class="inline-block bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition font-semibold">
+                        <a href="{{ asset($lampiranPath) }}" download class="inline-block bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition font-semibold">
                             📥 Download Lampiran
                         </a>
                     </div>

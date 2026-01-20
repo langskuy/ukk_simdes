@@ -11,13 +11,16 @@ class GalleryController extends Controller
     /**
      * Show gallery/list of all pengaduan with status and lampiran
      */
-    public function pengaduan()
+    public function pengaduan(Request $request)
     {
-        $pengaduans = Pengaduan::where('status', '!=', 'baru')
-            ->where('status', '!=', 'ditolak')
-            ->latest()
-            ->paginate(12);
-        
+        $query = Pengaduan::where('status', '!=', 'ditolak');
+
+        if ($request->has('status') && $request->status != '') {
+            $query->where('status', $request->status);
+        }
+
+        $pengaduans = $query->latest()->paginate(12);
+
         return view('gallery.pengaduan', compact('pengaduans'));
     }
 
@@ -27,7 +30,7 @@ class GalleryController extends Controller
     public function showPengaduan($id)
     {
         $pengaduan = Pengaduan::findOrFail($id);
-        
+
         // Check if visible (not new/rejected or is own pengaduan)
         if ($pengaduan->status === 'baru' || $pengaduan->status === 'ditolak') {
             if (!auth()->check() || auth()->id() !== $pengaduan->user_id) {
@@ -66,9 +69,9 @@ class GalleryController extends Controller
             ->latest()
             ->take(6)
             ->get();
-        
+
         $recentKegiatans = Kegiatan::latest()->take(6)->get();
-        
+
         return view('gallery.dashboard', compact('recentPengaduans', 'recentKegiatans'));
     }
 }

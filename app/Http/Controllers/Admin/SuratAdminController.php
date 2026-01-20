@@ -23,20 +23,20 @@ class SuratAdminController extends Controller
     {
         $surat = Surat::with('user')->findOrFail($id);
 
-        $fileIsPdf = false;
-        if ($surat->file_surat && \Illuminate\Support\Facades\Storage::disk('public')->exists($surat->file_surat)) {
-            $path = \Illuminate\Support\Facades\Storage::disk('public')->path($surat->file_surat);
-            if (is_readable($path)) {
-                $fh = fopen($path, 'rb');
-                $start = fread($fh, 5);
-                fclose($fh);
-                if ($start === "%PDF-") {
-                    $fileIsPdf = true;
-                }
+        $fileMime = null;
+        if ($surat->file_surat && Storage::disk('public')->exists($surat->file_surat)) {
+            $path = Storage::disk('public')->path($surat->file_surat);
+            if (file_exists($path)) {
+                $finfo = finfo_open(FILEINFO_MIME_TYPE);
+                $fileMime = finfo_file($finfo, $path);
+                finfo_close($finfo);
             }
         }
 
-        return view('admin.surat.show', compact('surat', 'fileIsPdf'));
+        $fileIsPdf = ($fileMime === 'application/pdf');
+        $fileIsImage = str_starts_with($fileMime ?? '', 'image/');
+
+        return view('admin.surat.show', compact('surat', 'fileIsPdf', 'fileIsImage'));
     }
 
     public function update(Request $request, $id)
@@ -45,7 +45,7 @@ class SuratAdminController extends Controller
         $validated = $request->validate([
             'status' => 'nullable|in:diajukan,diproses,selesai',
             'tanggal_selesai' => 'nullable|date',
-            'file_surat' => 'nullable|file|mimes:pdf|max:5120',
+            'file_surat' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:5120',
             'generate_pdf' => 'nullable|boolean',
         ]);
 
@@ -67,10 +67,11 @@ class SuratAdminController extends Controller
         $surat->update($validated);
 
         // If PDF generation was requested or status became 'selesai', ensure a file exists.
-        $shouldGenerate = $request->has('generate_pdf') || ($validated['status'] ?? null) === 'selesai';
+        $forceGenerate = $request->has('generate_pdf') && $request->generate_pdf == '1';
+        $shouldGenerate = $forceGenerate || ($validated['status'] ?? null) === 'selesai';
         $hasFile = $surat->file_surat && Storage::disk('public')->exists($surat->file_surat);
 
-        if ($shouldGenerate && !$hasFile) {
+        if ($shouldGenerate && (!$hasFile || $forceGenerate)) {
             // If the status is set to 'selesai', generate synchronously so warga can download immediately.
             // This intentionally generates synchronously to meet the requirement that the file
             // is immediately available after admin marks the surat as selesai.
@@ -83,7 +84,7 @@ class SuratAdminController extends Controller
                         return redirect()->route('admin.surat.show', $surat)->with('success', 'Surat disimpan dan PDF sudah tersedia.');
                     } catch (\Exception $dbEx) {
                         // Database save failed (likely DB connection issue). Write manifest mapping as fallback
-                        Log::warning('Failed to save file_surat to DB for surat '.$surat->id.': '.$dbEx->getMessage());
+                        Log::warning('Failed to save file_surat to DB for surat ' . $surat->id . ': ' . $dbEx->getMessage());
                         try {
                             $manifestPath = 'surat/manifest.json';
                             $manifest = [];
@@ -92,9 +93,9 @@ class SuratAdminController extends Controller
                                 $manifest = json_decode($raw, true) ?? [];
                             }
                             $manifest[$surat->id] = $pdfPath;
-                            Storage::disk('public')->put($manifestPath, json_encode($manifest, JSON_UNESCAPED_UNICODE|JSON_PRETTY_PRINT));
+                            Storage::disk('public')->put($manifestPath, json_encode($manifest, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
                         } catch (\Exception $mfEx) {
-                            Log::error('Failed to write manifest for surat '.$surat->id.': '.$mfEx->getMessage());
+                            Log::error('Failed to write manifest for surat ' . $surat->id . ': ' . $mfEx->getMessage());
                         }
 
                         return redirect()->route('admin.surat.show', $surat)->with('warning', 'Surat disimpan, PDF dibuat tetapi tidak dapat menyimpan ke database — file tersimpan sementara.');
@@ -108,18 +109,18 @@ class SuratAdminController extends Controller
                     try {
                         Artisan::call('surat:generate', ['id' => $surat->id]);
                     } catch (\Exception $ex) {
-                        Log::error('Failed to queue fallback generate for surat '.$surat->id, ['err' => $ex->getMessage()]);
+                        Log::error('Failed to queue fallback generate for surat ' . $surat->id, ['err' => $ex->getMessage()]);
                     }
                 }
 
                 return redirect()->route('admin.surat.show', $surat)->with('warning', 'Status disimpan. PDF belum berhasil dibuat, tetapi pekerjaan pembuatan telah dijadwalkan.');
             } catch (\Exception $e) {
                 // If synchronous generation fails, log and dispatch background job as fallback.
-                Log::error('Synchronous PDF generation failed for surat '.$surat->id.': '.$e->getMessage());
+                Log::error('Synchronous PDF generation failed for surat ' . $surat->id . ': ' . $e->getMessage());
                 try {
                     GenerateSuratPdf::dispatch($surat->id);
                 } catch (\Exception $ex) {
-                    Log::error('Failed to dispatch GenerateSuratPdf fallback for surat '.$surat->id.': '.$ex->getMessage());
+                    Log::error('Failed to dispatch GenerateSuratPdf fallback for surat ' . $surat->id . ': ' . $ex->getMessage());
                 }
 
                 return redirect()->route('admin.surat.show', $surat)->with('warning', 'Status disimpan. Terjadi kesalahan saat membuat PDF; pekerjaan pembuatan dijadwalkan.');
@@ -127,15 +128,6 @@ class SuratAdminController extends Controller
         }
 
         return redirect()->route('admin.surat.show', $surat)->with('success', 'Surat berhasil diperbarui.');
-    }
-
-    /**
-     * Show the form for editing the surat.
-     */
-    public function edit($id)
-    {
-        $surat = Surat::with('user')->findOrFail($id);
-        return view('admin.surat.edit', compact('surat'));
     }
 
     /**

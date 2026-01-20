@@ -19,6 +19,20 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        \Illuminate\Support\Facades\Event::listen(
+            \Illuminate\Auth\Events\Login::class,
+            \App\Listeners\LogAuthActivity::class,
+        );
+
+        \Illuminate\Support\Facades\Event::listen(
+            \Illuminate\Auth\Events\Logout::class,
+            \App\Listeners\LogAuthActivity::class,
+        );
+
+        // Share pending counts with admin layout
+        \Illuminate\Support\Facades\View::composer('layouts.admin', function ($view) {
+            $view->with('pendingSuratCount', \App\Models\Surat::where('status', 'diajukan')->count());
+            $view->with('pendingPengaduanCount', \App\Models\Pengaduan::where('status', 'baru')->count());
+        });
     }
 }

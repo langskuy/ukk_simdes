@@ -42,12 +42,23 @@
                         </div>
 
                         <div class="mb-3">
+                            <label for="nik" class="form-label">
+                                <i class="fas fa-id-card me-2"></i>NIK
+                            </label>
+                            <input type="text" name="nik" id="nik" class="form-control" 
+                                   value="{{ old('nik') }}" placeholder="16 digit NIK" required 
+                                   maxlength="16" minlength="16" pattern="\d{16}" title="NIK harus 16 digit angka">
+                        </div>
+
+                        <div class="mb-3">
                             <label for="email" class="form-label">
                                 <i class="fas fa-envelope me-2"></i>Email
                             </label>
                             <input type="email" name="email" id="email" class="form-control" 
                                    value="{{ old('email') }}" placeholder="nama@email.com" required>
                         </div>
+
+
 
                         <div class="mb-3">
                             <label for="password" class="form-label">
@@ -74,7 +85,7 @@
 
                     <p class="text-center text-muted small mb-0">
                         Sudah punya akun? 
-                        <a href="{{ route('login.form') }}" class="fw-bold text-primary text-decoration-none">
+                        <a href="{{ route('login') }}" class="fw-bold text-primary text-decoration-none">
                             Masuk di sini
                         </a>
                     </p>

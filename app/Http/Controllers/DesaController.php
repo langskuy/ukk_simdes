@@ -40,7 +40,7 @@ class DesaController extends Controller
             try {
                 $json = json_decode(file_get_contents($path), true);
                 if (is_array($json)) {
-                    $desa = array_merge($desa, $json);
+                    $desa = array_replace_recursive($desa, $json);
                 }
             } catch (\Throwable $e) {
                 // ignore and use defaults
@@ -91,18 +91,18 @@ class DesaController extends Controller
         $data['provinsi'] = $validated['provinsi'] ?? $data['provinsi'] ?? null;
 
         // Population formatting
-        $data['populasi'] = number_format((int)$validated['populasi']) . ' jiwa';
+        $data['populasi'] = number_format((int) $validated['populasi']) . ' jiwa';
 
         // Luas wilayah: keep one decimal if provided
         if (isset($validated['luas_wilayah'])) {
-            $data['luas_wilayah'] = rtrim(rtrim(number_format((float)$validated['luas_wilayah'], 2, '.', ''), '0'), '.') . ' km²';
+            $data['luas_wilayah'] = rtrim(rtrim(number_format((float) $validated['luas_wilayah'], 2, '.', ''), '0'), '.') . ' km²';
         }
 
         if (isset($validated['jumlah_rt'])) {
-            $data['jumlah_rt'] = (int)$validated['jumlah_rt'] . ' RT';
+            $data['jumlah_rt'] = (int) $validated['jumlah_rt'] . ' RT';
         }
         if (isset($validated['jumlah_rw'])) {
-            $data['jumlah_rw'] = (int)$validated['jumlah_rw'] . ' RW';
+            $data['jumlah_rw'] = (int) $validated['jumlah_rw'] . ' RW';
         }
 
         $data['sejarah'] = $validated['sejarah'] ?? $data['sejarah'] ?? '';

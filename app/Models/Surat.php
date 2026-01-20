@@ -10,11 +10,21 @@ class Surat extends Model
     use HasFactory;
 
     protected $fillable = [
-        'user_id', 'nama_pemohon', 'nik', 'no_hp', 'jenis_surat', 'keterangan', 'status', 'tanggal_selesai', 'file_surat'
+        'user_id',
+        'nama_pemohon',
+        'nik',
+        'no_hp',
+        'jenis_surat',
+        'keterangan',
+        'status',
+        'tanggal_selesai',
+        'file_surat',
+        'lampiran'
     ];
 
     protected $casts = [
         'tanggal_selesai' => 'date',
+        'lampiran' => 'array',
     ];
 
     public function user()

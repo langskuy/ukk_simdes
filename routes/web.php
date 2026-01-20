@@ -16,6 +16,9 @@ Route::get('/', function () {
     return view('beranda');
 })->name('beranda');
 
+// Verifikasi Surat (TTE)
+Route::get('/verifikasi-surat/{id}', [SuratController::class, 'verify'])->name('surat.verify');
+
 /*
 |--------------------------------------------------------------------------
 | AUTH
@@ -24,36 +27,67 @@ Route::get('/', function () {
 Route::get('/register', [AuthController::class, 'registerForm'])->middleware('guest')->name('register.form');
 Route::post('/register', [AuthController::class, 'registerStore'])->middleware('guest')->name('register.store');
 
-Route::get('/login', [AuthController::class, 'loginForm'])->middleware('guest')->name('login.form');
+Route::get('/login', [AuthController::class, 'loginForm'])->middleware('guest')->name('login');
 Route::post('/login', [AuthController::class, 'loginAttempt'])->middleware('guest')->name('login.attempt');
+
+// Password Reset Routes
+Route::get('/forgot-password', [App\Http\Controllers\PasswordResetController::class, 'showLinkRequestForm'])
+    ->middleware('guest')
+    ->name('password.request');
+Route::post('/forgot-password', [App\Http\Controllers\PasswordResetController::class, 'sendResetLinkEmail'])
+    ->middleware('guest')
+    ->name('password.email');
+Route::get('/reset-password/{token}', [App\Http\Controllers\PasswordResetController::class, 'showResetForm'])
+    ->middleware('guest')
+    ->name('password.reset');
+Route::post('/reset-password', [App\Http\Controllers\PasswordResetController::class, 'reset'])
+    ->middleware('guest')
+    ->name('password.update');
+
+
+
+Route::get('/desa-wonokasian/profile', [App\Http\Controllers\DesaController::class, 'profile'])->name('desa.profile');
 
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
-/*
-|--------------------------------------------------------------------------
-| DESA
-|--------------------------------------------------------------------------
-*/
-Route::get('/desa/profile', [App\Http\Controllers\DesaController::class, 'profile'])->name('desa.profile');
-Route::post('/desa/profile', [App\Http\Controllers\DesaController::class, 'updateProfile'])->middleware('auth')->name('desa.update');
+// Secret Admin Login
+Route::get('/simpanel/login', [AuthController::class, 'adminLoginForm'])->middleware('guest')->name('admin.login');
+Route::post('/simpanel/login', [AuthController::class, 'adminLoginAttempt'])->middleware('guest')->name('admin.login.attempt');
 
 /*
 |--------------------------------------------------------------------------
-| DASHBOARD
+| ADMIN PANEL (Restricted Access)
 |--------------------------------------------------------------------------
 */
-Route::get('/admin/dashboard', [\App\Http\Controllers\Admin\AdminDashboardController::class, 'index'])
-    ->middleware('auth')->name('admin.dashboard');
+Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
+    // Dashboard
+    Route::get('/dashboard', [\App\Http\Controllers\Admin\AdminDashboardController::class, 'index'])->name('dashboard');
+    Route::get('/activity-logs', [\App\Http\Controllers\Admin\ActivityLogAdminController::class, 'index'])->name('activity-logs.index');
 
-// Admin CRUD Routes
-Route::middleware('auth')->prefix('admin')->name('admin.')->group(function () {
+    // Desa Profile Management
+    Route::get('/desa/profile', [App\Http\Controllers\DesaController::class, 'profile'])->name('desa.profile');
+    Route::post('/desa/profile', [App\Http\Controllers\DesaController::class, 'updateProfile'])->name('desa.update');
+
+    // CRUD Resources
+    // CRUD Resources
     Route::resource('users', \App\Http\Controllers\Admin\UserAdminController::class);
-    Route::resource('pengaduan', \App\Http\Controllers\Admin\PengaduanAdminController::class)->only(['index', 'show', 'edit', 'update', 'destroy']);
+    Route::resource('penduduk', \App\Http\Controllers\Admin\PendudukAdminController::class);
+    Route::resource('keuangan', \App\Http\Controllers\Admin\KeuanganAdminController::class);
+    Route::resource('pengaduan', \App\Http\Controllers\Admin\PengaduanAdminController::class)->only(['index', 'show', 'update', 'destroy']);
     Route::resource('kegiatan', \App\Http\Controllers\Admin\KegiatanAdminController::class);
-    Route::resource('surat', \App\Http\Controllers\Admin\SuratAdminController::class)->only(['index', 'show', 'edit', 'update', 'destroy']);
+    Route::resource('surat', \App\Http\Controllers\Admin\SuratAdminController::class)->only(['index', 'show', 'update', 'destroy']);
 });
 
-Route::get('/warga/dashboard', fn() => view('warga.dashboard'))
+/*
+|--------------------------------------------------------------------------
+| PROFILE (Shared)
+|--------------------------------------------------------------------------
+*/
+Route::middleware('auth')->group(function () {
+    Route::get('/profile', [App\Http\Controllers\ProfileController::class, 'index'])->name('profile');
+});
+
+Route::get('/warga/dashboard', [\App\Http\Controllers\Warga\DashboardController::class, 'index'])
     ->middleware('auth')->name('warga.dashboard');
 
 /*
@@ -61,7 +95,7 @@ Route::get('/warga/dashboard', fn() => view('warga.dashboard'))
 | SURAT (Publik - Info jenis surat)
 |--------------------------------------------------------------------------
 */
-Route::get('/surat', [App\Http\Controllers\SuratController::class, 'index'])->name('surat');
+// Route::get('/surat', [App\Http\Controllers\SuratController::class, 'index'])->name('surat'); // Old index removed
 
 /*
 |--------------------------------------------------------------------------
@@ -90,15 +124,15 @@ Route::get('/gallery/kegiatan/{id}', [App\Http\Controllers\GalleryController::cl
 Route::middleware('auth')->group(function () {
     // Halaman pilihan surat (universal)
     Route::get('/surat/ajukan', [App\Http\Controllers\SuratController::class, 'create'])->name('surat.create');
-    
+
     // Form untuk setiap jenis surat
     Route::get('/surat/ajukan/usaha', [App\Http\Controllers\SuratController::class, 'createUsaha'])->name('surat.usaha');
     Route::get('/surat/ajukan/domisili', [App\Http\Controllers\SuratController::class, 'createDomisili'])->name('surat.domisili');
     Route::get('/surat/ajukan/tidak-mampu', [App\Http\Controllers\SuratController::class, 'createTidakMampu'])->name('surat.tidak-mampu');
     Route::get('/surat/ajukan/pindah', [App\Http\Controllers\SuratController::class, 'createPindah'])->name('surat.pindah');
     Route::get('/surat/ajukan/kelahiran', [App\Http\Controllers\SuratController::class, 'createKelahiran'])->name('surat.kelahiran');
-    Route::get('/surat/ajukan/lainnya', [App\Http\Controllers\SuratController::class, 'createLainnya'])->name('surat.lainnya');
-    
+    Route::get('/surat/ajukan/skck', [App\Http\Controllers\SuratController::class, 'createSkck'])->name('surat.skck');
+
     // Store dan history
     Route::post('/surat', [App\Http\Controllers\SuratController::class, 'store'])->name('surat.store');
     Route::get('/surat/terima-kasih', [App\Http\Controllers\SuratController::class, 'thanks'])->name('surat.thanks');
@@ -111,6 +145,11 @@ Route::middleware('auth')->group(function () {
     Route::post('/pengaduan', [App\Http\Controllers\PengaduanController::class, 'store'])->name('pengaduan.store');
     Route::get('/pengaduan/terima-kasih', [App\Http\Controllers\PengaduanController::class, 'thanks'])->name('pengaduan.thanks');
     Route::get('/pengaduan/riwayat', [App\Http\Controllers\PengaduanController::class, 'history'])->name('pengaduan.history');
+    // Redirect /surat to /surat/ajukan or just handle it here
+    Route::get('/surat', [App\Http\Controllers\SuratController::class, 'create'])->name('surat');
+
+    // User Cancel Surat
+    Route::delete('/surat/{surat}/cancel', [App\Http\Controllers\SuratController::class, 'destroy'])->name('surat.cancel');
 });
 
 /*
@@ -146,4 +185,15 @@ Route::get('/dev/sample-surat', function () {
 
     $full = \Illuminate\Support\Facades\Storage::disk('public')->path($path);
     return response()->download($full, basename($full));
+});
+
+Route::get('/test-firebase', function () {
+    $db = app('firebase.database');
+
+    $db->getReference('cek')->set([
+        'status' => 'OK',
+        'time' => now()->toDateTimeString()
+    ]);
+
+    return 'Firebase CONNECTED';
 });

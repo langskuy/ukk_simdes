@@ -23,26 +23,40 @@ class AuthController extends Controller
      */
     public function registerStore(Request $request)
     {
-   
+
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',
+            'nik' => 'required|numeric|digits:16|unique:users,nik',
             'password' => 'required|string|min:6|confirmed',
         ]);
 
+        // Cek validitas data warga (Master Data)
+        $penduduk = \App\Models\Penduduk::where('nik', $validated['nik'])->first();
+
+        if (!$penduduk) {
+            return back()->withErrors(['nik' => 'NIK tidak terdaftar dalam database penduduk desa.'])->withInput();
+        }
+
+        // Cek kesesuaian nama (case-insensitive)
+        if (strcasecmp($validated['name'], $penduduk->nama) != 0) {
+            return back()->withErrors(['name' => 'Nama tidak sesuai dengan data penduduk untuk NIK tersebut.'])->withInput();
+        }
+
         // Buat user baru
-            // `User` model has a `hashed` cast for `password`, so pass the
-            // raw password here and let the model cast/hash it.
-            $user = User::create([
-                'name' => $validated['name'],
-                'email' => $validated['email'],
-                'password' => $validated['password'],
-                'role' => 'warga',
-            ]);
+        // `User` model has a `hashed` cast for `password`, so pass the
+        // raw password here and let the model cast/hash it.
+        $user = User::create([
+            'name' => $penduduk->nama, // Gunakan nama dari master data untuk konsistensi
+            'email' => $validated['email'],
+            'nik' => $validated['nik'],
+            'password' => $validated['password'],
+            'role' => 'warga',
+        ]);
 
         // Do NOT auto-login after register — require explicit login
         return redirect()
-            ->route('login.form')
+            ->route('login')
             ->with('success', 'Registrasi berhasil. Silakan masuk menggunakan akun Anda.');
     }
 
@@ -66,15 +80,50 @@ class AuthController extends Controller
 
         if (Auth::attempt($credentials)) {
             $request->session()->regenerate();
+            $user = Auth::user();
 
-            return match (Auth::user()->role) {
-                'admin' => redirect()->route('admin.dashboard'),
-                default => redirect()->route('warga.dashboard'),
-            };
+            if ($user->role === 'admin') {
+                return redirect()->route('admin.dashboard');
+            }
+
+            return redirect()->route('warga.dashboard');
         }
 
         return back()
             ->withErrors(['email' => 'Email atau password salah.'])
+            ->withInput();
+    }
+
+    /**
+     * Tampilkan halaman login admin.
+     */
+    public function adminLoginForm()
+    {
+        return view('auth.admin-login');
+    }
+
+    /**
+     * Proses login admin.
+     */
+    public function adminLoginAttempt(Request $request)
+    {
+        $credentials = $request->validate([
+            'email' => 'required|email',
+            'password' => 'required|string',
+        ]);
+
+        if (Auth::attempt($credentials)) {
+            if (Auth::user()->role !== 'admin') {
+                Auth::logout();
+                return back()->withErrors(['email' => 'Maaf, akun ini tidak memiliki akses administrator.'])->withInput();
+            }
+
+            $request->session()->regenerate();
+            return redirect()->route('admin.dashboard');
+        }
+
+        return back()
+            ->withErrors(['email' => 'Email atau password administrator salah.'])
             ->withInput();
     }
 

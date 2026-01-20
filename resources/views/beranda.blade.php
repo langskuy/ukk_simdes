@@ -228,6 +228,8 @@
             overflow: hidden;
             transition: all 0.4s ease;
             height: 100%;
+            display: flex;
+            flex-direction: column;
             box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
         }
 
@@ -238,6 +240,7 @@
 
         .card-kegiatan img {
             height: 220px;
+            width: 100%;
             object-fit: cover;
             transition: transform 0.4s ease;
         }
@@ -248,20 +251,39 @@
 
         .card-kegiatan .card-body {
             padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            flex-grow: 1;
         }
 
         .card-kegiatan .card-title {
             color: #1e3a5f;
             font-weight: 700;
-            margin-bottom: 0.5rem;
+            margin-bottom: 0.75rem;
             font-size: 1.2rem;
             line-height: 1.4;
+            /* Line Clamp untuk Judul (Max 2 baris) */
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
         }
 
         .card-kegiatan .card-text {
             color: #666;
             font-size: 0.95rem;
             line-height: 1.6;
+            margin-bottom: 1.5rem;
+             /* Line Clamp untuk Deskripsi (Max 3 baris) */
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        /* Wrapper tombol agar selalu di bawah */
+        .card-footer-wrapper {
+            margin-top: auto;
         }
 
         .card-date {
@@ -373,8 +395,9 @@
     <nav class="navbar navbar-expand-lg navbar-dark sticky-top">
         <div class="container-fluid px-4">
             {{-- Brand --}}
-            <a class="navbar-brand fw-bold" href="{{ route('beranda') }}">
-                <i class="fas fa-home me-2"></i>Desa Wonokasian
+            <a class="navbar-brand fw-bold d-flex align-items-center" href="{{ route('beranda') }}">
+                <img src="{{ asset('images/logo-desa.png') }}" alt="Logo" width="40" height="40" class="me-2">
+                Desa Wonokasian
             </a>
 
             {{-- Toggler --}}
@@ -401,11 +424,27 @@
                     @endphp
                     @if($isLoggedIn)
                         <li class="nav-item">
+                            @php $dashRoute = auth()->user()->role === 'admin' ? route('admin.dashboard') : route('warga.dashboard'); @endphp
+                            <a class="nav-link" href="{{ $dashRoute }}">
+                                <i class="fas fa-tachometer-alt me-2"></i>Dashboard
+                            </a>
+                        </li>
+                        <li class="nav-item">
                             <a class="nav-link" href="{{ route('surat') }}">
                                 <i class="fas fa-file-alt me-2"></i>Surat
                             </a>
                         </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ route('profile') }}">
+                                <i class="fas fa-user-circle me-2"></i>Profil Saya
+                            </a>
+                        </li>
                     @endif
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ route('gallery.dashboard') }}">
+                            <i class="fas fa-images me-2"></i>Galeri
+                        </a>
+                    </li>
                 </ul>
 
                 <div class="d-flex align-items-center ms-3 gap-2">
@@ -426,7 +465,7 @@
 
                     @if(!$currentUser)
                         <a href="{{ route('register.form') }}" class="btn btn-outline-light btn-sm">Register</a>
-                        <a href="{{ route('login.form') }}" class="btn btn-light btn-sm">Login</a>
+                        <a href="{{ route('login') }}" class="btn btn-light btn-sm">Login</a>
                     @else
                         <span class="text-white me-2">{{ $currentUser->name ?? 'Pengguna' }}</span>
                         <form action="{{ route('logout') }}" method="POST" class="d-inline">
@@ -461,7 +500,7 @@
                     <a href="{{ route('register.form') }}" class="btn btn-hero btn-hero-primary">
                         <i class="fas fa-user-plus me-2"></i>Daftar
                     </a>
-                    <a href="{{ route('login.form') }}" class="btn btn-hero btn-hero-secondary">
+                    <a href="{{ route('login') }}" class="btn btn-hero btn-hero-secondary">
                         <i class="fas fa-sign-in-alt me-2"></i>Login
                     </a>
                 @else
@@ -473,16 +512,16 @@
                             <i class="fas fa-users-cog me-2"></i>Kelola Pengguna
                         </a>
                     @else
-                        <a href="{{ route('surat.create') }}" class="btn btn-hero btn-hero-primary">
-                            <i class="fas fa-file-export me-2"></i>Ajukan Surat
+                        <a href="{{ route('warga.dashboard') }}" class="btn btn-hero btn-hero-primary">
+                            <i class="fas fa-tachometer-alt me-2"></i>Dashboard Warga
                         </a>
-                        <a href="{{ route('surat.history') }}" class="btn btn-hero btn-hero-secondary">
-                            <i class="fas fa-history me-2"></i>Riwayat Surat
+                        <a href="{{ route('surat.create') }}" class="btn btn-hero btn-hero-secondary">
+                            <i class="fas fa-file-export me-2"></i>Ajukan Surat
                         </a>
                     @endif
                 @endif
 
-                <a href="{{ route('kegiatan.index') }}" class="btn btn-hero btn-hero-secondary">
+                <a href="{{ route('gallery.kegiatan') }}" class="btn btn-hero btn-hero-secondary">
                     <i class="fas fa-calendar-alt me-2"></i>Lihat Kegiatan
                 </a>
             </div>
@@ -497,7 +536,7 @@
                     <h2 class="section-title">Kegiatan Desa</h2>
                 </div>
                 <div class="col-md-6 text-md-end">
-                    <a href="{{ route('kegiatan.index') }}" class="btn see-all-btn">
+                    <a href="{{ route('gallery.kegiatan') }}" class="btn see-all-btn">
                         Lihat Semua Kegiatan <i class="fas fa-arrow-right ms-2"></i>
                     </a>
                 </div>
@@ -517,7 +556,7 @@
                         <div class="col-12 col-md-6 col-lg-4">
                             <div class="card card-kegiatan">
                                 @if($item->foto)
-                                    <a href="{{ route('kegiatan.show', $item) }}" style="text-decoration: none; display: block; overflow: hidden;">
+                                    <a href="{{ route('gallery.kegiatan.show', $item) }}" style="text-decoration: none; display: block; overflow: hidden;">
                                         <img src="{{ asset('storage/' . $item->foto) }}" alt="{{ $item->judul }}">
                                     </a>
                                 @else
@@ -532,14 +571,16 @@
                                         {{ $item->tanggal ? $item->tanggal->locale('id')->format('d M Y') : '—' }}
                                     </div>
                                     <h5 class="card-title">
-                                        <a href="{{ route('kegiatan.show', $item) }}" class="text-reset text-decoration-none">
+                                        <a href="{{ route('gallery.kegiatan.show', $item) }}" class="text-reset text-decoration-none">
                                             {{ $item->judul }}
                                         </a>
                                     </h5>
                                     <p class="card-text">{{ Str::limit($item->deskripsi, 100) }}</p>
-                                    <a href="{{ route('kegiatan.show', $item) }}" class="btn-read-more">
-                                        Baca Selengkapnya <i class="fas fa-arrow-right ms-1"></i>
-                                    </a>
+                                    <div class="card-footer-wrapper">
+                                        <a href="{{ route('gallery.kegiatan.show', $item) }}" class="btn-read-more">
+                                            Baca Selengkapnya <i class="fas fa-arrow-right ms-1"></i>
+                                        </a>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -576,8 +617,11 @@
                     </h6>
                     <ul class="list-unstyled small">
                         <li><a href="{{ route('beranda') }}">Beranda</a></li>
+                        @auth
+                            <li><a href="{{ auth()->user()->role === 'admin' ? route('admin.dashboard') : route('warga.dashboard') }}">Dashboard</a></li>
+                        @endauth
                         <li><a href="{{ route('surat') }}">Surat</a></li>
-                        <li><a href="{{ route('kegiatan.index') }}">Kegiatan</a></li>
+                        <li><a href="{{ route('gallery.kegiatan') }}">Kegiatan</a></li>
                     </ul>
                 </div>
                 <div class="col-md-4">

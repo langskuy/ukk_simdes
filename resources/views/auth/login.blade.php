@@ -14,6 +14,14 @@
                         <p class="text-muted small">Akses layanan digital desa</p>
                     </div>
 
+                    {{-- Status/Success Message --}}
+                    @if (session('status'))
+                        <div class="alert alert-success alert-dismissible fade show" role="alert">
+                            {{ session('status') }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    @endif
+
                     {{-- Error Messages --}}
                     @if ($errors->any())
                         <div class="alert alert-danger alert-dismissible fade show" role="alert">
@@ -40,12 +48,18 @@
                                    value="{{ old('email') }}" placeholder="nama@email.com" required autofocus>
                         </div>
 
-                        <div class="mb-3">
+                        <div class="mb-2">
                             <label for="password" class="form-label">
                                 <i class="fas fa-lock me-2"></i>Password
                             </label>
                             <input type="password" name="password" id="password" class="form-control" 
                                    placeholder="••••••••" required>
+                        </div>
+
+                        <div class="text-end mb-4">
+                            <a href="{{ route('password.request') }}" class="small fw-bold text-decoration-none">
+                                Lupa Password?
+                            </a>
                         </div>
 
                         <button type="submit" class="btn btn-primary w-100 py-2 fw-bold mb-3">

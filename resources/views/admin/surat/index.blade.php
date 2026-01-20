@@ -1,4 +1,4 @@
-@extends('layouts.app')
+@extends('layouts.admin')
 
 @push('styles')
     <style>
@@ -22,6 +22,46 @@
             outline: none !important;
             box-shadow: none !important;
         }
+
+        /* ===== HIGHLIGHT UNTUK SURAT BARU/BELUM DIPROSES ===== */
+        .new-request-row {
+            background-color: #fff9e6 !important;
+            /* Light yellow background */
+            border-left: 4px solid #ffc107 !important;
+            /* Yellow left border */
+            transition: background-color 0.3s ease;
+        }
+
+        .new-request-row:hover {
+            background-color: #fff3cd !important;
+            /* Slightly darker on hover */
+        }
+
+        /* Pulse animation for status badge */
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+
+            50% {
+                opacity: 0.85;
+                transform: scale(1.05);
+            }
+        }
+
+        .pulse-badge {
+            animation: pulse 2s ease-in-out infinite;
+            box-shadow: 0 2px 8px rgba(0, 123, 255, 0.3);
+        }
+
+        /* Override Bootstrap's table-warning-subtle if needed */
+        .table-warning-subtle {
+            --bs-table-bg: #fff9e6;
+            --bs-table-hover-bg: #fff3cd;
+        }
     </style>
 @endpush
 
@@ -29,7 +69,6 @@
     <div class="container-fluid py-4">
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h3 class="fw-bold">📄 Kelola Surat Desa</h3>
-            <a href="{{ route('admin.dashboard') }}" class="btn btn-outline-secondary">← Dashboard</a>
         </div>
 
         @if (session('success'))
@@ -57,17 +96,23 @@
                             </thead>
                             <tbody>
                                 @foreach ($surats as $surat)
-                                    <tr>
+                                    <tr class="{{ $surat->status === 'diajukan' ? 'table-warning-subtle new-request-row' : '' }}">
                                         <td>{{ ($surats->currentPage() - 1) * $surats->perPage() + $loop->iteration }}</td>
-                                        <td><strong>{{ $surat->jenis_surat }}</strong></td>
+                                        <td>
+                                            <strong>{{ $surat->jenis_surat }}</strong>
+                                            @if ($surat->status === 'diajukan')
+                                                <span class="badge bg-danger ms-2 pulse-badge" style="font-size: 0.65rem;">BARU</span>
+                                            @endif
+                                        </td>
                                         <td>{{ $surat->nama_pemohon ?? ($surat->user?->name ?? '—') }}</td>
                                         <td>
                                             @if ($surat->status === 'diajukan')
-                                                <span class="badge bg-primary">Diajukan</span>
+                                                <span class="badge bg-primary pulse-badge"
+                                                    style="font-size: 0.875rem; padding: 0.5rem 0.75rem;">📨 Diajukan</span>
                                             @elseif ($surat->status === 'diproses')
-                                                <span class="badge bg-warning">Diproses</span>
+                                                <span class="badge bg-warning text-dark">⏳ Diproses</span>
                                             @else
-                                                <span class="badge bg-success">Selesai</span>
+                                                <span class="badge bg-success">✅ Selesai</span>
                                             @endif
                                         </td>
                                         <td>{{ $surat->created_at->format('d/m/Y') }}</td>
@@ -79,26 +124,23 @@
                                                 style="background:#00AEEF; color:white;" title="Lihat Detail">👁️</a>
 
                                             <!-- Edit -->
-                                            <a href="{{ route('admin.surat.edit', $surat) }}" class="action-btn"
-                                                style="background:#0D6EFD; color:white;" title="Edit">✏️</a>
+                                            <!-- Edit removed, status update now in show -->
 
                                             {{-- Update Status button removed as requested (status update flow unchanged) --}}
 
                                             <!-- Hapus (open global modal) -->
-                                            <button type="button" class="action-btn"
-                                                style="background:#DC3545; color:white;"
+                                            <button type="button" class="action-btn" style="background:#DC3545; color:white;"
                                                 data-bs-toggle="modal" data-bs-target="#deleteModal"
                                                 data-destroy-url="{{ route('admin.surat.destroy', $surat) }}"
-                                                data-surat-id="{{ $surat->id }}"
-                                                data-surat-name="{{ $surat->nama_pemohon }}"
-                                                data-surat-jenis="{{ $surat->jenis_surat }}"
-                                                title="Hapus">🗑️</button>
+                                                data-surat-id="{{ $surat->id }}" data-surat-name="{{ $surat->nama_pemohon }}"
+                                                data-surat-jenis="{{ $surat->jenis_surat }}" title="Hapus">🗑️</button>
 
                                         </td>
 
                                     </tr>
 
-                                    {{-- per-item modals removed; using global modals below to improve performance/responsiveness --}}
+                                    {{-- per-item modals removed; using global modals below to improve performance/responsiveness
+                                    --}}
                                 @endforeach
                             </tbody>
                         </table>
@@ -162,9 +204,12 @@
                 });
             }
 
-            // GLOBAL Delete Modal handling (populate and protect submit)
+            // GLOBAL Delete Modal handling
             var deleteModal = document.getElementById('deleteModal');
             if (deleteModal) {
+                var deleteForm = deleteModal.querySelector('form');
+                var deleteBtn = deleteForm ? deleteForm.querySelector('button[type=submit]') : null;
+
                 deleteModal.addEventListener('show.bs.modal', function (event) {
                     var button = event.relatedTarget;
                     var destroyUrl = button.getAttribute('data-destroy-url');
@@ -177,33 +222,26 @@
                         msgEl.textContent = nama + ' (' + jenis + ')';
                     }
 
-                    var form = deleteModal.querySelector('form');
-                    if (form && destroyUrl) {
-                        form.action = destroyUrl;
-                        var btn = form.querySelector('button[type=submit]');
-                        if (btn) {
-                            // reset button state each time modal opens
-                            btn.disabled = false;
-                            btn.textContent = 'Ya, Hapus';
-                            btn.dataset.clicked = '0';
-
-                            // protect against double-click by disabling on first click
-                            // use a click handler attached on show so it's fresh every time
-                            var clickHandler = function (e) {
-                                if (btn.dataset.clicked === '1') {
-                                    e.preventDefault();
-                                    return;
-                                }
-                                btn.dataset.clicked = '1';
-                                btn.disabled = true;
-                                btn.textContent = 'Menghapus...';
-                            };
-
-                            btn.removeEventListener('click', clickHandler);
-                            btn.addEventListener('click', clickHandler, { once: true });
+                    if (deleteForm && destroyUrl) {
+                        deleteForm.action = destroyUrl;
+                        // Reset button state
+                        if (deleteBtn) {
+                            deleteBtn.disabled = false;
+                            deleteBtn.textContent = 'Ya, Hapus';
                         }
                     }
                 });
+
+                // Attach submit listener ONCE
+                if (deleteForm) {
+                    deleteForm.addEventListener('submit', function (e) {
+                        if (deleteBtn) {
+                            deleteBtn.disabled = true;
+                            deleteBtn.textContent = 'Menghapus...';
+                        }
+                        // Allow form to submit normally
+                    });
+                }
             }
 
             // Minor accessibility: avoid preventing native events; use CSS to handle focus styles

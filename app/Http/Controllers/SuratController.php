@@ -4,75 +4,63 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Surat;
+use App\Models\ActivityLog;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
+use App\Services\FirebaseService;
 
 class SuratController extends Controller
 {
     /**
      * Tampilkan daftar jenis surat desa (publik).
      */
-    public function index()
-    {
-        return view('surat.index');
-    }
 
+
+    /**
+     * Tampilkan form pengajuan surat (auth required).
+     * Default fallback ke halaman umum
+     */
     /**
      * Tampilkan form pengajuan surat (auth required).
      * Default fallback ke halaman umum
      */
     public function create()
     {
+        // if ($this->hasPendingSurat()) {
+        //     return redirect()->route('surat.history')->with('error', 'Anda masih memiliki surat yang sedang diajukan. Harap tunggu hingga diproses admin.');
+        // }
         return view('surat.create');
     }
 
-    /**
-     * Tampilkan form pengajuan Surat Keterangan Usaha
-     */
     public function createUsaha()
     {
-        return view('surat.form-usaha');
+        return redirect()->route('surat.create', ['jenis_surat' => 'Surat Keterangan Usaha']);
     }
 
-    /**
-     * Tampilkan form pengajuan Surat Keterangan Domisili
-     */
     public function createDomisili()
     {
-        return view('surat.form-domisili');
+        return redirect()->route('surat.create', ['jenis_surat' => 'Surat Keterangan Domisili']);
     }
 
-    /**
-     * Tampilkan form pengajuan Surat Keterangan Tidak Mampu
-     */
     public function createTidakMampu()
     {
-        return view('surat.form-tidak-mampu');
+        return redirect()->route('surat.create', ['jenis_surat' => 'Surat Keterangan Tidak Mampu']);
     }
 
-    /**
-     * Tampilkan form pengajuan Surat Keterangan Pindah
-     */
     public function createPindah()
     {
-        return view('surat.form-pindah');
+        return redirect()->route('surat.create', ['jenis_surat' => 'Surat Keterangan Pindah']);
     }
 
-    /**
-     * Tampilkan form pengajuan Surat Keterangan Kelahiran
-     */
     public function createKelahiran()
     {
-        return view('surat.form-kelahiran');
+        return redirect()->route('surat.create', ['jenis_surat' => 'Surat Keterangan Kelahiran']);
     }
 
-    /**
-     * Tampilkan form pengajuan Surat Keterangan Lainnya
-     */
-    public function createLainnya()
+    public function createSkck()
     {
-        return view('surat.form-lainnya');
+        return redirect()->route('surat.create', ['jenis_surat' => 'Surat Pengantar SKCK']);
     }
 
     /**
@@ -80,111 +68,160 @@ class SuratController extends Controller
      */
     public function store(Request $request)
     {
-        // Validasi dasar (wajib untuk semua jenis surat)
-        $validated = $request->validate([
+        // if ($this->hasPendingSurat()) {
+        //     return redirect()->route('surat.history')->with('error', 'Anda masih memiliki surat yang sedang diajukan.');
+        // }
+
+        // 1. Validasi Dasar
+        $rules = [
             'jenis_surat' => 'required|string|max:255',
             'keterangan' => 'nullable|string|max:1000',
-            // Field Surat Domisili Lengkap
-            'nik' => 'nullable|string|max:16',
-            'no_kk' => 'nullable|string|max:16',
-            'no_hp' => 'nullable|string|max:15',
-            'tempat_lahir' => 'nullable|string|max:255',
-            'tanggal_lahir' => 'nullable|date',
-            'alamat' => 'nullable|string|max:500',
-            'rt_rw' => 'nullable|string|max:20',
-            'kelurahan' => 'nullable|string|max:255',
-            'lama_tinggal' => 'nullable|string|max:100',
-            'status_rumah' => 'nullable|string|max:100',
-            'jenis_rumah' => 'nullable|string|max:100',
-            'luas_rumah' => 'nullable|string|max:50',
-            'alamat_sebelumnya' => 'nullable|string|max:500',
-            'alasan_pindah' => 'nullable|string|max:255',
-            'tujuan' => 'nullable|string|max:255',
-            // Field Surat Usaha
-            'nama_usaha' => 'nullable|string|max:255',
-            'jenis_usaha' => 'nullable|string|max:255',
-            'alamat_usaha' => 'nullable|string|max:500',
-            'tahun_berdiri' => 'nullable|integer|min:1900|max:2100',
-            'modal_usaha' => 'nullable|string|max:255',
-            'jumlah_karyawan' => 'nullable|integer|min:0',
-            'skala_produksi' => 'nullable|string|max:100',
-            // Field Surat Tidak Mampu
-            'alasan_pengajuan' => 'nullable|string|max:255',
-            'jumlah_anggota_keluarga' => 'nullable|integer',
-            'pekerjaan' => 'nullable|string|max:255',
-            'penghasilan_bulanan' => 'nullable|string|max:255',
-            'kondisi_khusus' => 'nullable|string|max:500',
-            'aset' => 'nullable|array',
-            'aset.*' => 'nullable|string|max:100',
-            // Field Surat Pindah
-            'alamat_lama' => 'nullable|string|max:500',
-            'desa_tujuan' => 'nullable|string|max:255',
-            'kecamatan_tujuan' => 'nullable|string|max:255',
-            'kabupaten_tujuan' => 'nullable|string|max:255',
-            'provinsi_tujuan' => 'nullable|string|max:255',
-            'alamat_baru' => 'nullable|string|max:500',
-            'tanggal_pindah' => 'nullable|date',
-            'lama_tinggal_lama' => 'nullable|string|max:100',
-            'anggota_keluarga' => 'nullable|integer|min:0',
-            // Field Surat Kelahiran
-            'nama_anak' => 'nullable|string|max:255',
-            'jenis_kelamin_anak' => 'nullable|string|max:20',
-            'berat_lahir' => 'nullable|numeric|min:1000|max:6000',
-            'panjang_lahir' => 'nullable|numeric|min:30|max:60',
-            'nama_ibu' => 'nullable|string|max:255',
-            'nama_ayah' => 'nullable|string|max:255',
-            'nik_ibu' => 'nullable|string|max:16',
-            'nik_ayah' => 'nullable|string|max:16',
-            // Field Surat Lainnya
-            'jenis_surat_khusus' => 'nullable|string|max:255',
-            'detail_permintaan' => 'nullable|string|max:2000',
-            'nama_lembaga' => 'nullable|string|max:255',
-            'alamat_lembaga' => 'nullable|string|max:500',
-            'kontak_lembaga' => 'nullable|string|max:255',
-        ]);
+            // File Uploads
+            'files.*' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:2048', // Max 2MB per file
+        ];
+
+        // 2. Validasi Dinamis Berdasarkan Jenis Surat (Opsional - Backend Validation Layer)
+// Kita bisa menambahkan aturan spesifik jika diperlukan, tapi validasi frontend sudah cukup ketat.
+// Untuk keamanan ekstra, kita bisa cek required fields di sini.
+        $jenis = $request->jenis_surat;
+
+        if ($jenis == 'Surat Keterangan Usaha') {
+            $rules['nama_usaha'] = 'required|string|max:255';
+            $rules['jenis_usaha'] = 'required|string|max:255';
+            $rules['alamat_usaha'] = 'required|string|max:500';
+            $rules['lama_usaha'] = 'required|string|max:255';
+            $rules['modal_usaha'] = 'nullable|string|max:255';
+            $rules['penghasilan_bulanan'] = 'nullable|string|max:255';
+        } elseif ($jenis == 'Surat Keterangan Domisili') {
+            $rules['alamat_domisili'] = 'required|string|max:500';
+            $rules['lama_tinggal'] = 'required|string|max:255';
+            $rules['keperluan'] = 'required|string|max:255';
+        } elseif ($jenis == 'Surat Keterangan Tidak Mampu') {
+            $rules['penghasilan_bulanan'] = 'required|string|max:255';
+            $rules['keperluan'] = 'required|string|max:255';
+            $rules['data_keluarga'] = 'required|string';
+        } elseif ($jenis == 'Surat Keterangan Pindah') {
+            $rules['alamat_tujuan'] = 'required|string|max:500';
+            $rules['alasan_pindah'] = 'required|string|max:255';
+            $rules['jumlah_pengikut'] = 'required|integer|min:0';
+            $rules['daftar_pengikut'] = 'nullable|string';
+        } elseif ($jenis == 'Surat Keterangan Kelahiran') {
+            $rules['nama_anak'] = 'required|string|max:255';
+            $rules['jenis_kelamin_anak'] = 'required|string';
+            $rules['tempat_lahir_anak'] = 'required|string|max:255';
+            $rules['tanggal_lahir_anak'] = 'required|date';
+            $rules['waktu_lahir'] = 'required|string';
+            $rules['anak_ke'] = 'required|integer|min:1';
+            $rules['nama_ayah'] = 'required|string|max:255';
+            $rules['nik_ayah'] = 'required|string|max:20';
+            $rules['ttl_ayah'] = 'required|string|max:255';
+            $rules['pekerjaan_ayah'] = 'required|string|max:255';
+            $rules['nama_ibu'] = 'required|string|max:255';
+            $rules['nik_ibu'] = 'required|string|max:20';
+            $rules['ttl_ibu'] = 'required|string|max:255';
+            $rules['pekerjaan_ibu'] = 'required|string|max:255';
+            $rules['alamat_ortu'] = 'required|string|max:500';
+        } elseif ($jenis == 'Surat Pengantar SKCK') {
+            $rules['keperluan'] = 'required|string|max:255';
+        }
+
+        $validated = $request->validate($rules);
 
         $user = Auth::user();
 
-        // Store basic data (guard if for some reason user is null)
-        $suratData = [
-            'user_id' => $user ? $user->id : null,
-            'nama_pemohon' => $user ? $user->name : ($validated['nama_pemohon'] ?? 'Pemohon'),
-            'nik' => $user->nik ?? ($validated['nik'] ?? null),
-            'no_hp' => $user->no_hp ?? ($validated['no_hp'] ?? null),
-            'jenis_surat' => $validated['jenis_surat'],
-            'status' => 'diajukan',
-        ];
-
-        // Tambahkan keterangan dari form umum atau spesifik
-        $keterangan = [];
-        
-        // Kumpulkan data spesifik berdasarkan jenis surat
-        foreach ($validated as $key => $value) {
-            if ($key !== 'jenis_surat' && $value !== null) {
-                $keterangan[$key] = $value;
+        // 3. Handle File Uploads
+        $lampiranPaths = [];
+        if ($request->hasFile('files')) {
+            foreach ($request->file('files') as $key => $file) {
+                // Simpan di storage/app/public/lampiran_surat
+                $path = $file->store('lampiran_surat', 'public');
+                $lampiranPaths[$key] = $path; // Key sesuai input name (ktp, kk, dll)
             }
         }
 
-        // Convert ke JSON atau text format
-        if (!empty($keterangan)) {
-            $suratData['keterangan'] = json_encode($keterangan, JSON_UNESCAPED_UNICODE);
+        // 4. Prepare Data
+        $suratData = [
+            'user_id' => $user ? $user->id : null,
+            'nama_pemohon' => $user ? $user->name : ($validated['nama_pemohon'] ?? 'Pemohon'),
+            'nik' => $request->nik ?? $user->nik, // Prioritas input user jika ada perubahan
+            'no_hp' => $request->no_hp ?? $user->no_hp,
+            'jenis_surat' => $validated['jenis_surat'],
+            'status' => 'diajukan',
+            'lampiran' => !empty($lampiranPaths) ? $lampiranPaths : null, // Casted to array via Model
+        ];
+
+        // 5. Kumpulkan Keterangan Detail (Gabung semua input field dinamis)
+        $excludeFields = ['_token', 'jenis_surat', 'files', 'nik', 'no_hp', 'keterangan'];
+        $detailData = $request->except($excludeFields);
+
+        // Bersihkan null values
+        $detailData = array_filter($detailData, function ($value) {
+            return !is_null($value) && $value !== '';
+        });
+
+        if (!empty($detailData)) {
+            $suratData['keterangan'] = json_encode($detailData, JSON_UNESCAPED_UNICODE);
         } else {
-            $suratData['keterangan'] = $validated['keterangan'] ?? null;
+            $suratData['keterangan'] = $request->keterangan;
+        }
+
+        // Simpan note tambahan terpisah jika perlu, atau gabung ke json
+        if ($request->keterangan) {
+            // Jika keterangan sudah JD JSON, kita decode dulu, tambah field, encode lagi
+// Atau simpelnya: Jika detailData ada, masukkan request->keterangan sebagai field 'catatan_tambahan'
+            if (!empty($detailData)) {
+                $detailData['catatan_tambahan'] = $request->keterangan;
+                $suratData['keterangan'] = json_encode($detailData, JSON_UNESCAPED_UNICODE);
+            }
         }
 
         try {
-            Surat::create($suratData);
+            $surat = Surat::create($suratData);
+
+            // Create Local Activity Log
+            ActivityLog::create([
+                'user_id' => $user->id,
+                'activity_type' => 'permohonan',
+                'description' => "Mengajukan {$surat->jenis_surat}",
+                'ip_address' => request()->ip(),
+                'user_agent' => request()->userAgent(),
+            ]);
+
+            // Push notification & activity to Firebase
+            try {
+                $firebase = new FirebaseService();
+                $firebase->pushNotification('surat', [
+                    'id' => $surat->id,
+                    'title' => 'Permohonan Surat Baru',
+                    'message' => "{$surat->nama_pemohon} mengajukan {$surat->jenis_surat}",
+                    'sender' => $surat->nama_pemohon
+                ]);
+            } catch (\Exception $fe) {
+                Log::error('Firebase Notification Failed: ' . $fe->getMessage());
+            }
+
+            return redirect()->route('surat.thanks');
         } catch (\Exception $e) {
-            // Log the error and return a helpful message to user
-            Log::error('Gagal menyimpan Surat: '.$e->getMessage(), [
+            Log::error('Gagal menyimpan Surat: ' . $e->getMessage(), [
                 'data' => $suratData,
                 'exception' => $e,
             ]);
-
-            return redirect()->back()->withInput()->with('error', 'Terjadi kesalahan saat mengajukan surat. Mohon coba lagi atau hubungi admin. Error: '.$e->getMessage());
+            return redirect()->back()->withInput()->with('error', 'Terjadi kesalahan saat mengajukan surat. Error: ' .
+                $e->getMessage());
         }
 
-        return redirect()->route('surat.thanks')->with('success', 'Pengajuan surat berhasil dikirim!');
+        return redirect()->route('surat.history')->with('success', 'Pengajuan surat berhasil dikirim! Silakan pantau status
+pengajuan di sini.');
+    }
+
+    /**
+     * Check if user has pending surat
+     */
+    private function hasPendingSurat()
+    {
+        return Surat::where('user_id', Auth::id())
+            ->where('status', 'diajukan')
+            ->exists();
     }
 
     /**
@@ -230,11 +267,12 @@ class SuratController extends Controller
                 try {
                     $surat->save();
                 } catch (\Exception $e) {
-                    Log::warning('PDF generated but DB save failed for surat '.$surat->id.': '.$e->getMessage());
+                    Log::warning('PDF generated but DB save failed for surat ' . $surat->id . ': ' . $e->getMessage());
                     // Continue with download anyway - file is in public_path
                 }
             } else {
-                return redirect()->back()->with('error', 'File surat belum tersedia. Silakan coba beberapa saat lagi.');
+                $errorMessage = session('pdf_error') ?: 'File surat belum tersedia. Silakan coba beberapa saat lagi.';
+                return redirect()->back()->with('error', $errorMessage);
             }
         }
 
@@ -249,29 +287,58 @@ class SuratController extends Controller
             return redirect()->back()->with('error', 'File surat tidak ditemukan atau tidak dapat dibaca.');
         }
 
-        // Basic validation: ensure file starts with PDF header
-        $fh = @fopen($path, 'rb');
-        $isPdf = false;
-        if ($fh) {
-            $start = fread($fh, 5);
-            fclose($fh);
-            if ($start === "%PDF-") {
-                $isPdf = true;
-            }
-        }
-
-        if (! $isPdf) {
-            return redirect()->back()->with('error', 'File surat tidak valid (bukan PDF) atau korup.');
+        // Detect mimetype for serving
+        $mime = 'application/octet-stream';
+        if (file_exists($path)) {
+            $finfo = finfo_open(FILEINFO_MIME_TYPE);
+            $mime = finfo_file($finfo, $path);
+            finfo_close($finfo);
         }
 
         if ($inline) {
             // Return file to be displayed inline in browser with proper header
             return response()->file($path, [
-                'Content-Type' => 'application/pdf',
+                'Content-Type' => $mime,
             ]);
         }
 
         // Default: force download
         return response()->download($path, $filename);
+    }
+
+    /**
+     * Batalkan pengajuan surat (Hapus dari DB).
+     * Hanya bisa dilakukan jika status masih 'diajukan'.
+     */
+    public function destroy($id)
+    {
+        $surat = Surat::where('user_id', Auth::id())->findOrFail($id);
+
+        if ($surat->status !== 'diajukan') {
+            return back()->with('error', 'Hanya pengajuan dengan status "diajukan" yang bisa dibatalkan.');
+        }
+
+        // Hapus file lampiran jika ada
+        if ($surat->lampiran) {
+            foreach ($surat->lampiran as $path) {
+                Storage::disk('public')->delete($path);
+            }
+        }
+
+        $surat->delete();
+
+        return redirect()->route('surat.history')->with('success', 'Pengajuan surat berhasil dibatalkan.');
+    }
+
+    /**
+     * Verifikasi keaslian surat via QR Code.
+     * Route publik.
+     */
+    public function verify($id)
+    {
+        $surat = Surat::findOrFail($id);
+        $village = json_decode(Storage::disk('app')->get('desa.json'), true);
+
+        return view('surat.verify', compact('surat', 'village'));
     }
 }

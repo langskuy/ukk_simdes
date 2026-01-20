@@ -20,29 +20,15 @@ class PengaduanAdminController extends Controller
         return view('admin.pengaduan.show', compact('pengaduan'));
     }
 
-    /**
-     * Show the form for editing the specified pengaduan.
-     */
-    public function edit($id)
-    {
-        $pengaduan = Pengaduan::with('user')->findOrFail($id);
-        return view('admin.pengaduan.edit', compact('pengaduan'));
-    }
-
     public function update(Request $request, $id)
     {
         $pengaduan = Pengaduan::findOrFail($id);
         $validated = $request->validate([
-            'judul' => 'required|string|max:255',
-            'isi' => 'required|string',
-            'nama_pelapor' => 'required|string|max:255',
-            'email' => 'required|email',
-            'no_hp' => 'required|string|max:20',
             'status' => 'required|in:baru,proses,selesai',
         ]);
 
         $pengaduan->update($validated);
-        return redirect()->route('admin.pengaduan.index')->with('success', 'Pengaduan berhasil diperbarui.');
+        return redirect()->route('admin.pengaduan.show', $pengaduan)->with('success', 'Status pengaduan berhasil diperbarui.');
     }
 
     public function destroy($id)

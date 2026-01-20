@@ -12,8 +12,8 @@
         <div class="lg:col-span-2">
             <!-- Foto -->
             <div class="bg-white rounded-lg shadow-lg overflow-hidden mb-6">
-                @if($kegiatan->foto && file_exists(public_path($kegiatan->foto)))
-                    <img src="{{ asset($kegiatan->foto) }}" alt="{{ $kegiatan->judul }}" class="w-full h-auto max-h-96 object-cover">
+                @if($kegiatan->foto && file_exists(public_path('storage/' . $kegiatan->foto)))
+                    <img src="{{ asset('storage/' . $kegiatan->foto) }}" alt="{{ $kegiatan->judul }}" class="w-full h-auto max-h-96 object-cover">
                 @else
                     <div class="w-full h-96 bg-gradient-to-br from-gray-300 to-gray-400 flex items-center justify-center">
                         <span class="text-gray-500 text-6xl">📷</span>
@@ -93,8 +93,8 @@
                     <div class="bg-white rounded-lg shadow hover:shadow-lg transition overflow-hidden">
                         <!-- Foto -->
                         <div class="h-40 overflow-hidden bg-gray-200">
-                            @if($related->foto && file_exists(public_path($related->foto)))
-                                <img src="{{ asset($related->foto) }}" alt="{{ $related->judul }}" class="w-full h-full object-cover hover:scale-105 transition">
+                            @if($related->foto && file_exists(public_path('storage/' . $related->foto)))
+                                <img src="{{ asset('storage/' . $related->foto) }}" alt="{{ $related->judul }}" class="w-full h-full object-cover hover:scale-105 transition">
                             @else
                                 <div class="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-300 to-gray-400">
                                     <span class="text-gray-500 text-3xl">📷</span>
