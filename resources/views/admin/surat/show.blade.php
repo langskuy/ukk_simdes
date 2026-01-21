@@ -76,17 +76,20 @@
                                         <div class="col-md-4">
                                             <div class="card h-100 border">
                                                 <div class="card-body p-2 text-center">
-                                                    <small class="d-block text-uppercase text-muted mb-1">{{ str_replace('_', ' ', $key) }}</small>
+                                                    <small
+                                                        class="d-block text-uppercase text-muted mb-1">{{ str_replace('_', ' ', $key) }}</small>
                                                     @if ($isImg)
                                                         <a href="{{ asset('storage/' . $path) }}" target="_blank">
-                                                            <img src="{{ asset('storage/' . $path) }}" class="img-fluid rounded mb-2" style="max-height: 100px; object-fit: cover;">
+                                                            <img src="{{ asset('storage/' . $path) }}" class="img-fluid rounded mb-2"
+                                                                style="max-height: 100px; object-fit: cover;">
                                                         </a>
                                                     @else
                                                         <div class="py-3">
                                                             <i class="bi bi-file-earmark-pdf display-6 text-danger"></i>
                                                         </div>
                                                     @endif
-                                                    <a href="{{ asset('storage/' . $path) }}" target="_blank" class="btn btn-xs btn-outline-primary py-0 px-2" style="font-size: 0.7rem;">
+                                                    <a href="{{ asset('storage/' . $path) }}" target="_blank"
+                                                        class="btn btn-xs btn-outline-primary py-0 px-2" style="font-size: 0.7rem;">
                                                         Lihat {{ strtoupper($ext) }}
                                                     </a>
                                                 </div>
@@ -96,6 +99,12 @@
                                 </div>
                             </div>
                         @endif
+
+                        @php
+                            $fileExt = pathinfo($surat->file_surat, PATHINFO_EXTENSION);
+                            $fileIsPdf = strtolower($fileExt) === 'pdf';
+                            $fileIsImage = in_array(strtolower($fileExt), ['jpg', 'jpeg', 'png']);
+                        @endphp
 
                         @if ($surat->file_surat)
                             <div class="mb-3">
@@ -111,17 +120,11 @@
                                             class="btn btn-sm btn-info">
                                             🖼️ Lihat Gambar
                                         </a>
-                                    @else
-                                        <a href="{{ route('surat.download', $surat->id) }}" class="btn btn-sm btn-primary">
-                                            Download File
-                                        </a>
                                     @endif
-                                    <a href="{{ route('surat.download', $surat->id) }}" class="btn btn-sm btn-success">
-                                        ⬇️ Unduh
-                                    </a>
                                 </div>
                             </div>
                         @endif
+
 
                         <div class="d-flex gap-2">
                             <button type="button" class="btn btn-warning fw-semibold" data-bs-toggle="modal"
