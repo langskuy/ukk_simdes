@@ -58,7 +58,21 @@
                     @if ($pengaduan->lampiran)
                         <div class="mb-3">
                             <p class="text-muted mb-1">Lampiran</p>
-                            <a href="{{ asset('storage/' . $pengaduan->lampiran) }}" class="btn btn-sm btn-secondary" download>📥 Download</a>
+                            @php
+                                $lampiranPath = $pengaduan->lampiran;
+                                $isImage = preg_match('/\.(jpg|jpeg|png|gif|bmp)$/i', $lampiranPath);
+                            @endphp
+                            
+                            @if ($isImage)
+                                <div class="mb-2">
+                                    <img src="{{ asset('storage/' . $lampiranPath) }}" alt="Lampiran" class="img-fluid rounded" style="max-width: 300px;">
+                                </div>
+                            @endif
+                            
+                            <a href="{{ asset('storage/' . $lampiranPath) }}" class="btn btn-sm btn-secondary" download>📥 Download</a>
+                            @if ($isImage)
+                                <a href="{{ asset('storage/' . $lampiranPath) }}" class="btn btn-sm btn-info" target="_blank">👁️ Lihat</a>
+                            @endif
                         </div>
                     @endif
 

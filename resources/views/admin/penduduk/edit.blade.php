@@ -10,7 +10,7 @@
                     <h5 class="fw-bold mb-0"><i class="bi bi-pencil-square me-2 text-primary"></i>Edit Data Warga</h5>
                 </div>
                 <div class="card-body p-4 pt-0">
-                    <form action="{{ route('admin.penduduk.update', $penduduk) }}" method="POST">
+                    <form action="{{ route('admin.penduduk.update', $penduduk) }}" method="POST" enctype="multipart/form-data">
                         @csrf
                         @method('PUT')
                         <div class="mb-3">
@@ -33,6 +33,17 @@
                                 <option value="P" {{ old('jenis_kelamin', $penduduk->jenis_kelamin) == 'P' ? 'selected' : '' }}>Perempuan</option>
                             </select>
                             @error('jenis_kelamin') <div class="text-danger small mt-1">{{ $message }}</div> @enderror
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold text-uppercase text-muted">Foto (Opsional)</label>
+                            @if ($penduduk->foto)
+                                <div class="mb-2">
+                                    <img src="{{ asset('storage/' . $penduduk->foto) }}" alt="Foto" class="img-fluid rounded" style="max-width: 150px;">
+                                </div>
+                            @endif
+                            <input type="file" name="foto" class="form-control rounded-3" accept="image/*">
+                            <small class="text-muted">Format: JPG, PNG (Max 2MB). Kosongkan jika tidak ingin mengubah.</small>
+                            @error('foto') <div class="text-danger small mt-1">{{ $message }}</div> @enderror
                         </div>
                         <div class="mb-4">
                             <label class="form-label small fw-bold text-uppercase text-muted">Alamat</label>

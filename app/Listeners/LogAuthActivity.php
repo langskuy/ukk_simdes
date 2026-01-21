@@ -38,27 +38,13 @@ class LogAuthActivity
         }
 
         if ($user) {
-            $activity = ActivityLog::create([
+            ActivityLog::create([
                 'user_id' => $user->id,
                 'activity_type' => $type,
                 'description' => $description,
                 'ip_address' => $ip,
                 'user_agent' => $userAgent,
             ]);
-
-            // Sync to Firebase Realtime Database
-            try {
-                $database = app('firebase.database');
-                $database->getReference('activities/' . $activity->id)->set([
-                    'id' => $activity->id,
-                    'user_name' => $user->name,
-                    'type' => $type,
-                    'description' => $description,
-                    'created_at' => now()->toIso8601String(),
-                ]);
-            } catch (\Exception $e) {
-                \Illuminate\Support\Facades\Log::error('Firebase Sync Failed for activity: ' . $e->getMessage());
-            }
         }
     }
 }

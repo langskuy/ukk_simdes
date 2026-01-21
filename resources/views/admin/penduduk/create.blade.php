@@ -10,7 +10,7 @@
                     <h5 class="fw-bold mb-0"><i class="bi bi-person-plus-fill me-2 text-primary"></i>Tambah Data Warga</h5>
                 </div>
                 <div class="card-body p-4 pt-0">
-                    <form action="{{ route('admin.penduduk.store') }}" method="POST">
+                    <form action="{{ route('admin.penduduk.store') }}" method="POST" enctype="multipart/form-data">
                         @csrf
                         <div class="mb-3">
                             <label class="form-label small fw-bold text-uppercase text-muted">NIK</label>
@@ -32,6 +32,12 @@
                                 <option value="P" {{ old('jenis_kelamin') == 'P' ? 'selected' : '' }}>Perempuan</option>
                             </select>
                             @error('jenis_kelamin') <div class="text-danger small mt-1">{{ $message }}</div> @enderror
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold text-uppercase text-muted">Foto (Opsional)</label>
+                            <input type="file" name="foto" class="form-control rounded-3" accept="image/*">
+                            <small class="text-muted">Format: JPG, PNG (Max 2MB)</small>
+                            @error('foto') <div class="text-danger small mt-1">{{ $message }}</div> @enderror
                         </div>
                         <div class="mb-4">
                             <label class="form-label small fw-bold text-uppercase text-muted">Alamat</label>

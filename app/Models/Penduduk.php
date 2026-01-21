@@ -14,5 +14,6 @@ class Penduduk extends Model
         'nama',
         'alamat',
         'jenis_kelamin',
+        'foto',
     ];
 }

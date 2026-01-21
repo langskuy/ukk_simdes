@@ -6,7 +6,6 @@ use Illuminate\Http\Request;
 use App\Models\Pengaduan;
 use App\Models\ActivityLog;
 use Illuminate\Support\Facades\Storage;
-use App\Services\FirebaseService;
 use Illuminate\Support\Facades\Log;
 
 class PengaduanController extends Controller
@@ -50,27 +49,14 @@ class PengaduanController extends Controller
             'status' => 'baru',
         ]);
 
-        // Push notification to Firebase
-        try {
-            // Create Local Activity Log
-            ActivityLog::create([
-                'user_id' => auth()->id(),
-                'activity_type' => 'laporan',
-                'description' => "Mengirim pengaduan: {$pengaduan->judul}",
-                'ip_address' => request()->ip(),
-                'user_agent' => request()->userAgent(),
-            ]);
-
-            $firebase = new FirebaseService();
-            $firebase->pushNotification('pengaduan', [
-                'id' => $pengaduan->id,
-                'title' => 'Pengaduan Warga Baru',
-                'message' => "{$pengaduan->nama_pelapor}: {$pengaduan->judul}",
-                'sender' => $pengaduan->nama_pelapor
-            ]);
-        } catch (\Exception $e) {
-            Log::error('Firebase Notification Failed: ' . $e->getMessage());
-        }
+        // Create Local Activity Log
+        ActivityLog::create([
+            'user_id' => auth()->id(),
+            'activity_type' => 'laporan',
+            'description' => "Mengirim pengaduan: {$pengaduan->judul}",
+            'ip_address' => request()->ip(),
+            'user_agent' => request()->userAgent(),
+        ]);
 
         return redirect()->route('pengaduan.thanks');
     }

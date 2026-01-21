@@ -8,7 +8,6 @@ use App\Models\ActivityLog;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
-use App\Services\FirebaseService;
 
 class SuratController extends Controller
 {
@@ -186,19 +185,6 @@ class SuratController extends Controller
                 'ip_address' => request()->ip(),
                 'user_agent' => request()->userAgent(),
             ]);
-
-            // Push notification & activity to Firebase
-            try {
-                $firebase = new FirebaseService();
-                $firebase->pushNotification('surat', [
-                    'id' => $surat->id,
-                    'title' => 'Permohonan Surat Baru',
-                    'message' => "{$surat->nama_pemohon} mengajukan {$surat->jenis_surat}",
-                    'sender' => $surat->nama_pemohon
-                ]);
-            } catch (\Exception $fe) {
-                Log::error('Firebase Notification Failed: ' . $fe->getMessage());
-            }
 
             return redirect()->route('surat.thanks');
         } catch (\Exception $e) {
