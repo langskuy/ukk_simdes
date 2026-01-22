@@ -257,14 +257,6 @@
                 </a>
             </li>
 
-            <li class="menu-item">
-                <a href="{{ route('admin.activity-logs.index') }}"
-                    class="menu-link {{ request()->routeIs('admin.activity-logs.*') ? 'active' : '' }}">
-                    <i class="bi bi-clock-history"></i>
-                    <span>Log Aktivitas</span>
-                </a>
-            </li>
-
             @auth
                 <li class="menu-label">Akun</li>
                 <li class="menu-item">

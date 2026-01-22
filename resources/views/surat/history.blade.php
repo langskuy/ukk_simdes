@@ -61,9 +61,12 @@
                                             @endif
                                         </td>
                                         <td class="text-center">
-                                            <button class="btn btn-sm btn-info" data-bs-toggle="modal"
-                                                data-bs-target="#detailModal{{ $surat->id }}" title="Lihat Detail">
-                                                👁️
+                                            <button class="btn btn-sm btn-info btn-detail" 
+                                                data-surat-id="{{ $surat->id }}" 
+                                                data-bs-toggle="modal"
+                                                data-bs-target="#detailModal" 
+                                                title="Lihat Detail">
+                                                <i class="bi bi-eye"></i> Detail
                                             </button>
 
                                             @if ($surat->status === 'diajukan')
@@ -72,7 +75,7 @@
                                                     @csrf
                                                     @method('DELETE')
                                                     <button type="submit" class="btn btn-sm btn-danger" title="Batalkan Pengajuan">
-                                                        ❌ Batal
+                                                        <i class="bi bi-trash"></i> Batal
                                                     </button>
                                                 </form>
                                             @endif
@@ -80,59 +83,15 @@
                                             @if ($surat->status === 'selesai')
                                                 <a href="{{ route('surat.view', $surat->id) }}" target="_blank"
                                                     class="btn btn-sm btn-primary" title="Lihat Surat">
-                                                    👁️ Lihat Surat
+                                                    <i class="bi bi-eye"></i> Lihat
                                                 </a>
                                                 <a href="{{ route('surat.download', $surat->id) }}" class="btn btn-sm btn-success"
                                                     title="Download Surat">
-                                                    ⬇️ Unduh
+                                                    <i class="bi bi-download"></i> Unduh
                                                 </a>
                                             @endif
                                         </td>
                                     </tr>
-
-                                    <!-- Modal Detail -->
-                                    <div class="modal fade" id="detailModal{{ $surat->id }}" tabindex="-1">
-                                        <div class="modal-dialog modal-dialog-centered">
-                                            <div class="modal-content">
-                                                <div class="modal-header bg-primary text-white">
-                                                    <h5 class="modal-title fw-bold">Detail Pengajuan Surat</h5>
-                                                    <button type="button" class="btn-close btn-close-white"
-                                                        data-bs-dismiss="modal"></button>
-                                                </div>
-                                                <div class="modal-body">
-                                                    <p class="mb-2"><strong>Jenis Surat:</strong> {{ $surat->jenis_surat }}</p>
-                                                    <p class="mb-2"><strong>Status:</strong>
-                                                        @if ($surat->status === 'diajukan')
-                                                            <span class="badge bg-primary">Diajukan</span>
-                                                        @elseif ($surat->status === 'diproses')
-                                                            <span class="badge bg-warning">Diproses</span>
-                                                        @elseif ($surat->status === 'selesai')
-                                                            <span class="badge bg-success">Selesai</span>
-                                                        @endif
-                                                    </p>
-                                                    <p class="mb-2"><strong>Tanggal Pengajuan:</strong>
-                                                        {{ $surat->created_at->format('d/m/Y H:i') }}</p>
-                                                    @if ($surat->tanggal_selesai)
-                                                        <p class="mb-2"><strong>Tanggal Selesai:</strong>
-                                                            {{ $surat->tanggal_selesai->format('d/m/Y') }}</p>
-                                                    @endif
-                                                    @if ($surat->keterangan)
-                                                        <p class="mb-2"><strong>Keterangan:</strong></p>
-                                                        <div class="alert alert-light border">{{ $surat->keterangan }}</div>
-                                                    @endif
-                                                    @if ($surat->status === 'selesai')
-                                                        <div class="alert alert-success">
-                                                            ✓ Surat Anda sudah siap untuk diambil di kantor desa!
-                                                        </div>
-                                                    @endif
-                                                </div>
-                                                <div class="modal-footer">
-                                                    <button type="button" class="btn btn-secondary"
-                                                        data-bs-dismiss="modal">Tutup</button>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
                                 @endforeach
                             </tbody>
                         </table>
@@ -154,4 +113,137 @@
             </div>
         </div>
     </div>
+
+    <!-- Modal Detail (Shared untuk semua surat) -->
+    <div class="modal fade" id="detailModal" tabindex="-1">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title fw-bold">📋 Detail Pengajuan Surat</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="modalDetailContent">
+                    <div class="spinner-border" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Handle Detail button click
+        document.querySelectorAll('.btn-detail').forEach(button => {
+            button.addEventListener('click', function() {
+                const suratId = this.getAttribute('data-surat-id');
+                loadDetailModal(suratId);
+            });
+        });
+
+        function loadDetailModal(suratId) {
+            const contentDiv = document.getElementById('modalDetailContent');
+            contentDiv.innerHTML = '<div class="spinner-border" role="status"><span class="visually-hidden">Loading...</span></div>';
+            
+            fetch(`/surat/${suratId}/detail`)
+                .then(response => response.json())
+                .then(result => {
+                    if (result.success) {
+                        contentDiv.innerHTML = buildDetailHtml(result.data);
+                    } else {
+                        contentDiv.innerHTML = '<div class="alert alert-danger">Gagal memuat detail</div>';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    contentDiv.innerHTML = '<div class="alert alert-danger">Terjadi kesalahan</div>';
+                });
+        }
+
+        function buildDetailHtml(data) {
+            let html = `
+                <p class="mb-2"><strong>Jenis Surat:</strong> ${data.jenis_surat}</p>
+                <p class="mb-2"><strong>Status:</strong> ${getStatusBadge(data.status)}</p>
+                <p class="mb-2"><strong>Tanggal Pengajuan:</strong> ${data.created_at}</p>
+            `;
+
+            if (data.tanggal_selesai) {
+                html += `<p class="mb-2"><strong>Tanggal Selesai:</strong> ${data.tanggal_selesai}</p>`;
+            }
+
+            // Data Warga & Pengajuan
+            if (Object.keys(data.keterangan).length > 0) {
+                html += `
+                    <div class="mb-3">
+                        <p class="mb-2"><strong>📋 Data Warga & Pengajuan:</strong></p>
+                        <div class="table-responsive" style="max-height: 350px; overflow-y: auto; border: 1px solid #dee2e6; border-radius: 0.375rem;">
+                            <table class="table table-sm table-striped mb-0">
+                `;
+                for (const [key, value] of Object.entries(data.keterangan)) {
+                    const displayKey = key.replace(/_/g, ' ').replace(/no /gi, 'No. ');
+                    const displayValue = Array.isArray(value) ? value.join(', ') : value;
+                    html += `
+                        <tr>
+                            <td style="width: 35%; font-weight: bold; background-color: #f8f9fa;">${capitalizeFirst(displayKey)}</td>
+                            <td style="width: 65%;">${displayValue}</td>
+                        </tr>
+                    `;
+                }
+                html += `
+                            </table>
+                        </div>
+                    </div>
+                `;
+            }
+
+            // Detail Data Pengajuan
+            if (Object.keys(data.detail_data).length > 0) {
+                html += `
+                    <hr>
+                    <p class="mb-2"><strong>📝 Detail Data Pengajuan:</strong></p>
+                    <div class="table-responsive" style="max-height: 350px; overflow-y: auto; border: 1px solid #dee2e6; border-radius: 0.375rem;">
+                        <table class="table table-sm table-striped mb-0">
+                `;
+                for (const [key, value] of Object.entries(data.detail_data)) {
+                    const displayKey = key.replace(/_/g, ' ');
+                    const displayValue = Array.isArray(value) ? value.join(', ') : value;
+                    html += `
+                        <tr>
+                            <td style="width: 35%; font-weight: bold; background-color: #f8f9fa;">${capitalizeFirst(displayKey)}</td>
+                            <td style="width: 65%;">${displayValue}</td>
+                        </tr>
+                    `;
+                }
+                html += `
+                        </table>
+                    </div>
+                `;
+            }
+
+            if (data.status === 'selesai') {
+                html += `
+                    <div class="alert alert-success mt-3 mb-0">
+                        <i class="bi bi-check-circle"></i> Surat Anda sudah siap untuk diambil di kantor desa!
+                    </div>
+                `;
+            }
+
+            return html;
+        }
+
+        function getStatusBadge(status) {
+            const badges = {
+                'diajukan': '<span class="badge bg-primary">Diajukan</span>',
+                'diproses': '<span class="badge bg-warning">Diproses</span>',
+                'selesai': '<span class="badge bg-success">Selesai</span>'
+            };
+            return badges[status] || `<span class="badge bg-danger">${status}</span>`;
+        }
+
+        function capitalizeFirst(str) {
+            return str.charAt(0).toUpperCase() + str.slice(1);
+        }
+    </script>
 @endsection

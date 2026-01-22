@@ -33,12 +33,6 @@
                             </select>
                             @error('jenis_kelamin') <div class="text-danger small mt-1">{{ $message }}</div> @enderror
                         </div>
-                        <div class="mb-3">
-                            <label class="form-label small fw-bold text-uppercase text-muted">Foto (Opsional)</label>
-                            <input type="file" name="foto" class="form-control rounded-3" accept="image/*">
-                            <small class="text-muted">Format: JPG, PNG (Max 2MB)</small>
-                            @error('foto') <div class="text-danger small mt-1">{{ $message }}</div> @enderror
-                        </div>
                         <div class="mb-4">
                             <label class="form-label small fw-bold text-uppercase text-muted">Alamat</label>
                             <textarea name="alamat" class="form-control rounded-3" rows="3">{{ old('alamat') }}</textarea>

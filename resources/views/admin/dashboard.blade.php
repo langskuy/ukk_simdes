@@ -112,60 +112,7 @@
                     </div>
                 </div>
 
-                {{-- Log Aktivitas Card (Separated) --}}
-                <div class="card border-0 rounded-4 shadow-sm">
-                    <div class="card-header bg-transparent border-0 p-4 pb-0">
-                        <h5 class="fw-bold mb-0">
-                            <i class="bi bi-clock-history me-2 text-success"></i>Log Aktivitas Terbaru
-                            <span class="badge bg-success bg-opacity-10 text-success rounded-pill ms-2 small">Live</span>
-                        </h5>
-                    </div>
-                    <div class="card-body p-4 activity-log-container">
-                        <div class="list-group list-group-flush" id="activity-log-list">
-                            @forelse($activities as $activity)
-                                <div class="list-group-item bg-transparent border-0 px-0 py-2">
-                                    <div class="d-flex align-items-center">
-                                        <div class="flex-shrink-0">
-                                            @if($activity->activity_type === 'login')
-                                                <div class="bg-success bg-opacity-10 text-success rounded-circle p-2">
-                                                    <i class="bi bi-box-arrow-in-right"></i>
-                                                </div>
-                                            @elseif($activity->activity_type === 'logout')
-                                                <div class="bg-secondary bg-opacity-10 text-secondary rounded-circle p-2">
-                                                    <i class="bi bi-box-arrow-right"></i>
-                                                </div>
-                                            @elseif($activity->activity_type === 'permohonan')
-                                                <div class="bg-primary bg-opacity-10 text-primary rounded-circle p-2">
-                                                    <i class="bi bi-file-earmark-text"></i>
-                                                </div>
-                                            @elseif($activity->activity_type === 'laporan')
-                                                <div class="bg-danger bg-opacity-10 text-danger rounded-circle p-2">
-                                                    <i class="bi bi-megaphone"></i>
-                                                </div>
-                                            @else
-                                                <div class="bg-info bg-opacity-10 text-info rounded-circle p-2">
-                                                    <i class="bi bi-info-circle"></i>
-                                                </div>
-                                            @endif
-                                        </div>
-                                        <div class="ms-3 flex-grow-1">
-                                            <p class="mb-0 small fw-bold text-dark">{{ $activity->user?->name ?? 'Sistem' }}</p>
-                                            <p class="mb-0 x-small text-muted">{{ $activity->description }}</p>
-                                        </div>
-                                        <div class="ms-auto text-end">
-                                            <span class="x-small text-muted">{{ $activity->created_at->diffForHumans() }}</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            @empty
-                                <div class="text-center py-4">
-                                    <i class="bi bi-inbox text-muted" style="font-size: 3rem;"></i>
-                                    <p class="text-muted mt-2 mb-0 small">Belum ada aktivitas tercatat.</p>
-                                </div>
-                            @endforelse
-                        </div>
-                    </div>
-                </div>
+                {{-- Aksi Cepat Card --}}
             </div>
 
             <div class="col-lg-4">

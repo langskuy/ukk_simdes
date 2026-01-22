@@ -33,7 +33,7 @@
                     <div class="bg-white rounded-lg shadow-md hover:shadow-xl transition overflow-hidden group">
                         <!-- Foto -->
                         <div class="h-56 overflow-hidden bg-gray-200">
-                            @if($kegiatan->foto && file_exists(public_path('storage/' . $kegiatan->foto)))
+                            @if($kegiatan->foto)
                                 <img src="{{ asset('storage/' . $kegiatan->foto) }}" alt="{{ $kegiatan->judul }}"
                                     class="w-full h-full object-cover group-hover:scale-110 transition duration-300">
                             @else

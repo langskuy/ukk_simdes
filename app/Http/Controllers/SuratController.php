@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Surat;
-use App\Models\ActivityLog;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
@@ -75,13 +74,30 @@ class SuratController extends Controller
         $rules = [
             'jenis_surat' => 'required|string|max:255',
             'keterangan' => 'nullable|string|max:1000',
+            'nik' => 'nullable|numeric|digits:16',
+            'no_kk' => 'nullable|numeric|digits:16',
+            'no_hp' => 'required|numeric|digits_between:10,12',
+            'tanggal_lahir' => 'required|date',
             // File Uploads
             'files.*' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:2048', // Max 2MB per file
         ];
 
+        $validated = $request->validate($rules);
+
+        $user = Auth::user();
+
+        // Validasi tanggal lahir harus sesuai dengan data user
+        if ($user && $user->tanggal_lahir) {
+            $userTanggalLahir = $user->tanggal_lahir instanceof \DateTime 
+                ? $user->tanggal_lahir->format('Y-m-d') 
+                : $user->tanggal_lahir;
+            
+            if ($validated['tanggal_lahir'] != $userTanggalLahir) {
+                return back()->withErrors(['tanggal_lahir' => 'Tanggal lahir harus sesuai dengan data registrasi Anda.'])->withInput();
+            }
+        }
+
         // 2. Validasi Dinamis Berdasarkan Jenis Surat (Opsional - Backend Validation Layer)
-// Kita bisa menambahkan aturan spesifik jika diperlukan, tapi validasi frontend sudah cukup ketat.
-// Untuk keamanan ekstra, kita bisa cek required fields di sini.
         $jenis = $request->jenis_surat;
 
         if ($jenis == 'Surat Keterangan Usaha') {
@@ -112,11 +128,11 @@ class SuratController extends Controller
             $rules['waktu_lahir'] = 'required|string';
             $rules['anak_ke'] = 'required|integer|min:1';
             $rules['nama_ayah'] = 'required|string|max:255';
-            $rules['nik_ayah'] = 'required|string|max:20';
+            $rules['nik_ayah'] = 'required|numeric|digits:16';
             $rules['ttl_ayah'] = 'required|string|max:255';
             $rules['pekerjaan_ayah'] = 'required|string|max:255';
             $rules['nama_ibu'] = 'required|string|max:255';
-            $rules['nik_ibu'] = 'required|string|max:20';
+            $rules['nik_ibu'] = 'required|numeric|digits:16';
             $rules['ttl_ibu'] = 'required|string|max:255';
             $rules['pekerjaan_ibu'] = 'required|string|max:255';
             $rules['alamat_ortu'] = 'required|string|max:500';
@@ -177,15 +193,6 @@ class SuratController extends Controller
         try {
             $surat = Surat::create($suratData);
 
-            // Create Local Activity Log
-            ActivityLog::create([
-                'user_id' => $user->id,
-                'activity_type' => 'permohonan',
-                'description' => "Mengajukan {$surat->jenis_surat}",
-                'ip_address' => request()->ip(),
-                'user_agent' => request()->userAgent(),
-            ]);
-
             return redirect()->route('surat.thanks');
         } catch (\Exception $e) {
             Log::error('Gagal menyimpan Surat: ' . $e->getMessage(), [
@@ -226,6 +233,55 @@ pengajuan di sini.');
         $user = Auth::user();
         $surats = Surat::where('user_id', $user->id)->latest()->paginate(10);
         return view('surat.history', compact('surats'));
+    }
+
+    /**
+     * Get detail surat via AJAX
+     */
+    public function getDetail($id)
+    {
+        try {
+            $surat = Surat::findOrFail($id);
+            
+            // Decode keterangan (data warga & pengajuan)
+            $keteranganData = [];
+            if ($surat->keterangan) {
+                if (is_string($surat->keterangan)) {
+                    $decoded = json_decode($surat->keterangan, true);
+                    $keteranganData = is_array($decoded) ? $decoded : [];
+                } elseif (is_array($surat->keterangan)) {
+                    $keteranganData = $surat->keterangan;
+                }
+            }
+            
+            // Decode detail_data
+            $detailData = [];
+            if ($surat->detail_data) {
+                if (is_string($surat->detail_data)) {
+                    $decoded = json_decode($surat->detail_data, true);
+                    $detailData = is_array($decoded) ? $decoded : [];
+                } elseif (is_array($surat->detail_data)) {
+                    $detailData = $surat->detail_data;
+                }
+            }
+            
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'jenis_surat' => $surat->jenis_surat,
+                    'status' => $surat->status,
+                    'created_at' => $surat->created_at->format('d/m/Y H:i'),
+                    'tanggal_selesai' => $surat->tanggal_selesai ? $surat->tanggal_selesai->format('d/m/Y') : null,
+                    'keterangan' => $keteranganData,
+                    'detail_data' => $detailData
+                ]
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal memuat detail surat'
+            ], 500);
+        }
     }
 
     /**
@@ -323,7 +379,7 @@ pengajuan di sini.');
     public function verify($id)
     {
         $surat = Surat::findOrFail($id);
-        $village = json_decode(Storage::disk('app')->get('desa.json'), true);
+        $village = json_decode(Storage::disk('local')->get('desa.json'), true);
 
         return view('surat.verify', compact('surat', 'village'));
     }

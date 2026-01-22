@@ -28,7 +28,10 @@ class AuthController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',
             'nik' => 'required|numeric|digits:16|unique:users,nik',
+            'tanggal_lahir' => 'required|date|before:' . now()->subYears(17)->format('Y-m-d'),
             'password' => 'required|string|min:6|confirmed',
+        ], [
+            'tanggal_lahir.before' => 'Anda harus minimal berusia 17 tahun untuk mendaftar.',
         ]);
 
         // Cek validitas data warga (Master Data)
@@ -50,6 +53,7 @@ class AuthController extends Controller
             'name' => $penduduk->nama, // Gunakan nama dari master data untuk konsistensi
             'email' => $validated['email'],
             'nik' => $validated['nik'],
+            'tanggal_lahir' => $validated['tanggal_lahir'],
             'password' => $validated['password'],
             'role' => 'warga',
         ]);

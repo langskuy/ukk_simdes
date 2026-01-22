@@ -58,7 +58,14 @@
                                    value="{{ old('email') }}" placeholder="nama@email.com" required>
                         </div>
 
-
+                        <div class="mb-3">
+                            <label for="tanggal_lahir" class="form-label">
+                                <i class="fas fa-birthday-cake me-2"></i>Tanggal Lahir
+                            </label>
+                            <input type="date" name="tanggal_lahir" id="tanggal_lahir" class="form-control" 
+                                   value="{{ old('tanggal_lahir') }}" required>
+                            <small class="text-muted">Minimal umur 17 tahun</small>
+                        </div>
 
                         <div class="mb-3">
                             <label for="password" class="form-label">

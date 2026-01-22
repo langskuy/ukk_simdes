@@ -313,8 +313,11 @@
             <p>Demikian surat keterangan ini dibuat dengan sebenarnya untuk dapat dipergunakan sebagaimana mestinya.</p>
         </div>
 
-        <!-- Tanda Tangan & QR Code -->
-        <div style="margin-top: 20px; width: 100%;">
+        <!-- Tanda Tangan & Pengesahan -->
+        <div style="margin-top: 30px; width: 100%;">
+            <div style="text-align: center; font-size: 10px; font-weight: bold; margin-bottom: 15px;">
+                Diajukan oleh,
+            </div>
             <table style="width: 100%;">
                 <tr>
                     <td style="width: 50%;"></td>
@@ -323,20 +326,26 @@
                             {{ $village['nama_desa'] ?? 'Wonokasian' }},
                             {{ now()->locale('id')->isoFormat('D MMMM Y') }}
                         </div>
-                        <div style="font-weight: bold; margin-bottom: 5px;">
+                        <div style="font-weight: bold; margin-bottom: 10px;">
                             Kepala Desa {{ $village['nama_desa'] ?? 'Wonokasian' }}
                         </div>
 
-                        <!-- QR Code TTE -->
-                        <div style="margin: 10px 0;">
-                            <img src="{{ $qr_code }}" style="width: 85px; height: 85px;" />
-                        </div>
+                        <div style="margin-bottom: 30px;"></div>
 
-                        <div
-                            style="margin-bottom: 5px; color: #155724; font-size: 8pt; font-weight: bold; font-style: italic;">
+                        <!-- QR Code -->
+                        @if($qr_code)
+                            <div style="text-align: center; margin: 15px 0;">
+                                <img src="{{ $qr_code }}" style="width: 70px; height: 70px;">
+                                <p style="font-size: 8px; color: #666; margin-top: 5px;">Verifikasi Dokumen</p>
+                            </div>
+                        @endif
+
+                        <div style="margin-bottom: 15px;"></div>
+
+                        <div style="margin-bottom: 5px; color: #155724; font-size: 8pt; font-weight: bold; font-style: italic;">
                             [Tanda Tangan Elektronik]
                         </div>
-                        <div style="font-weight: bold; text-decoration: underline;">
+                        <div style="font-weight: bold; text-decoration: underline; margin-bottom: 20px;">
                             {{ strtoupper($village['nama_kades'] ?? '( __________________________ )') }}
                         </div>
                         @if(!empty($village['nip_kades']))

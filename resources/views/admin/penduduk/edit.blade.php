@@ -34,17 +34,6 @@
                             </select>
                             @error('jenis_kelamin') <div class="text-danger small mt-1">{{ $message }}</div> @enderror
                         </div>
-                        <div class="mb-3">
-                            <label class="form-label small fw-bold text-uppercase text-muted">Foto (Opsional)</label>
-                            @if ($penduduk->foto)
-                                <div class="mb-2">
-                                    <img src="{{ asset('storage/' . $penduduk->foto) }}" alt="Foto" class="img-fluid rounded" style="max-width: 150px;">
-                                </div>
-                            @endif
-                            <input type="file" name="foto" class="form-control rounded-3" accept="image/*">
-                            <small class="text-muted">Format: JPG, PNG (Max 2MB). Kosongkan jika tidak ingin mengubah.</small>
-                            @error('foto') <div class="text-danger small mt-1">{{ $message }}</div> @enderror
-                        </div>
                         <div class="mb-4">
                             <label class="form-label small fw-bold text-uppercase text-muted">Alamat</label>
                             <textarea name="alamat" class="form-control rounded-3"

@@ -32,6 +32,7 @@ class User extends Authenticatable
         'role',
         'nik',
         'no_hp',
+        'tanggal_lahir',
     ];
 
     /**

@@ -37,17 +37,7 @@
                             <tr>
                                 <td class="fw-bold text-muted">{{ $penduduk->nik }}</td>
                                 <td>
-                                    <div class="d-flex align-items-center">
-                                        @if($penduduk->foto)
-                                            <img src="{{ asset('storage/' . $penduduk->foto) }}" alt="{{ $penduduk->nama }}" class="rounded-circle me-3" style="width: 35px; height: 35px; object-fit: cover;">
-                                        @else
-                                            <div class="bg-primary bg-opacity-10 text-primary rounded-circle d-flex align-items-center justify-content-center me-3"
-                                                style="width: 35px; height: 35px;">
-                                                <span class="fw-bold small">{{ substr($penduduk->nama, 0, 1) }}</span>
-                                            </div>
-                                        @endif
-                                        <span class="fw-bold text-dark">{{ $penduduk->nama }}</span>
-                                    </div>
+                                    <span class="fw-bold text-dark">{{ $penduduk->nama }}</span>
                                 </td>
                                 <td>
                                     <span

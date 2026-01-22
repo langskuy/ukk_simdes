@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Penduduk;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
 
 class PendudukAdminController extends Controller
 {
@@ -45,14 +44,7 @@ class PendudukAdminController extends Controller
             'nama' => 'required|string|max:255',
             'alamat' => 'nullable|string',
             'jenis_kelamin' => 'required|in:L,P',
-            'foto' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
         ]);
-
-        // Handle foto upload
-        if ($request->hasFile('foto')) {
-            $path = $request->file('foto')->store('penduduk', 'public');
-            $validated['foto'] = $path;
-        }
 
         Penduduk::create($validated);
 
@@ -85,18 +77,7 @@ class PendudukAdminController extends Controller
             'nama' => 'required|string|max:255',
             'alamat' => 'nullable|string',
             'jenis_kelamin' => 'required|in:L,P',
-            'foto' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
         ]);
-
-        // Handle foto upload
-        if ($request->hasFile('foto')) {
-            // Delete old foto if exists
-            if ($penduduk->foto) {
-                Storage::disk('public')->delete($penduduk->foto);
-            }
-            $path = $request->file('foto')->store('penduduk', 'public');
-            $validated['foto'] = $path;
-        }
 
         $penduduk->update($validated);
 
@@ -108,10 +89,6 @@ class PendudukAdminController extends Controller
      */
     public function destroy(Penduduk $penduduk)
     {
-        // Delete foto if exists
-        if ($penduduk->foto) {
-            Storage::disk('public')->delete($penduduk->foto);
-        }
         $penduduk->delete();
         return redirect()->route('admin.penduduk.index')->with('success', 'Data warga berhasil dihapus.');
     }

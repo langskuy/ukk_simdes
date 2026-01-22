@@ -13,7 +13,7 @@ class AdminSeeder extends Seeder
             ['email' => 'admin@gmail.com'],
             [
                 'name' => 'Admin Desa',
-                'password' => bcrypt('admin123'),
+                'password' => 'admin123',
                 'role' => 'admin', // jika tabel user ada kolom role
             ]
         );

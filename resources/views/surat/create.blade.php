@@ -321,7 +321,7 @@
                                             <div class="col-md-6">
                                                 <div class="form-floating">
                                                     <input type="text" name="nik" class="form-control bg-white"
-                                                        placeholder="NIK" required
+                                                        placeholder="NIK" required inputmode="numeric"
                                                         maxlength="16" minlength="16" pattern="\d{16}" title="NIK harus 16 digit angka"
                                                         value="{{ Auth::user()->nik ?? old('nik') }}" id="nikFloating">
                                                     <label for="nikFloating">Nomor NIK</label>
@@ -330,7 +330,8 @@
                                             <div class="col-md-6">
                                                 <div class="form-floating">
                                                     <input type="text" name="no_kk" class="form-control bg-white"
-                                                        placeholder="No. KK" required
+                                                        placeholder="No. KK" required inputmode="numeric"
+                                                        maxlength="16" minlength="16" pattern="\d{16}" title="No. KK harus 16 digit angka"
                                                         value="{{ Auth::user()->no_kk ?? old('no_kk') }}" id="kkFloating">
                                                     <label for="kkFloating">Nomor Kartu Keluarga (KK)</label>
                                                 </div>
@@ -363,7 +364,7 @@
                                                         placeholder="Tanggal Lahir" required
                                                         value="{{ Auth::user()->tanggal_lahir ?? old('tanggal_lahir') }}"
                                                         id="tglFloating">
-                                                    <label for="tglFloating">Tanggal Lahir</label>
+                                                    <label for="tglFloating">Tanggal Lahir (Dari Data Registrasi)</label>
                                                 </div>
                                             </div>
                                             <div class="col-md-6">
@@ -420,7 +421,8 @@
                                             <div class="col-md-6">
                                                 <div class="form-floating">
                                                     <input type="text" name="no_hp" class="form-control bg-white"
-                                                        placeholder="08..." required
+                                                        placeholder="08..." required inputmode="numeric"
+                                                        maxlength="12" pattern="\d{10,12}" title="No. WA harus 10-12 digit angka"
                                                         value="{{ Auth::user()->no_hp ?? old('no_hp') }}" id="hpFloating">
                                                     <label for="hpFloating">Nomor WhatsApp Aktif</label>
                                                 </div>
@@ -592,7 +594,7 @@
                                                 </div>
                                                 <div class="mb-2">
                                                     <label class="form-label small">NIK Ayah</label>
-                                                    <input type="text" name="nik_ayah" class="form-control form-control-sm" 
+                                                    <input type="text" name="nik_ayah" class="form-control form-control-sm" inputmode="numeric"
                                                         maxlength="16" minlength="16" pattern="\d{16}" title="NIK harus 16 digit angka"
                                                         value="{{ old('nik_ayah', Auth::user()->nik) }}">
                                                 </div>
@@ -613,7 +615,7 @@
                                                 </div>
                                                 <div class="mb-2">
                                                     <label class="form-label small">NIK Ibu</label>
-                                                    <input type="text" name="nik_ibu" class="form-control form-control-sm" 
+                                                    <input type="text" name="nik_ibu" class="form-control form-control-sm" inputmode="numeric"
                                                         maxlength="16" minlength="16" pattern="\d{16}" title="NIK harus 16 digit angka"
                                                         value="{{ old('nik_ibu') }}">
                                                 </div>

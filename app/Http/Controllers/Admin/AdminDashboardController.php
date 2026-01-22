@@ -8,7 +8,6 @@ use App\Models\Pengaduan;
 use App\Models\Kegiatan;
 use App\Models\Surat;
 use App\Models\User;
-use App\Models\ActivityLog;
 use Illuminate\Support\Facades\Auth;
 
 class AdminDashboardController extends Controller
@@ -28,17 +27,13 @@ class AdminDashboardController extends Controller
         $pengaduan_new = Pengaduan::where('status', 'baru')->count();
         $surat_new = Surat::where('status', 'diajukan')->count();
 
-        // Ambil 10 aktivitas terbaru
-        $activities = ActivityLog::with('user')->latest()->take(10)->get();
-
         return view('admin.dashboard', compact(
             'pengaduan_count',
             'kegiatan_count',
             'surat_count',
             'user_count',
             'pengaduan_new',
-            'surat_new',
-            'activities'
+            'surat_new'
         ));
     }
 }

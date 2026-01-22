@@ -62,7 +62,6 @@ Route::post('/simpanel/login', [AuthController::class, 'adminLoginAttempt'])->mi
 Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
     // Dashboard
     Route::get('/dashboard', [\App\Http\Controllers\Admin\AdminDashboardController::class, 'index'])->name('dashboard');
-    Route::get('/activity-logs', [\App\Http\Controllers\Admin\ActivityLogAdminController::class, 'index'])->name('activity-logs.index');
 
     // Desa Profile Management
     Route::get('/desa/profile', [App\Http\Controllers\DesaController::class, 'profile'])->name('desa.profile');
@@ -137,6 +136,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/surat', [App\Http\Controllers\SuratController::class, 'store'])->name('surat.store');
     Route::get('/surat/terima-kasih', [App\Http\Controllers\SuratController::class, 'thanks'])->name('surat.thanks');
     Route::get('/surat/riwayat', [App\Http\Controllers\SuratController::class, 'history'])->name('surat.history');
+    Route::get('/surat/{id}/detail', [App\Http\Controllers\SuratController::class, 'getDetail'])->name('surat.getDetail');
     Route::get('/surat/{surat}/download', [App\Http\Controllers\SuratController::class, 'download'])->name('surat.download');
     // View (inline) - opens PDF in browser when available
     Route::get('/surat/{surat}/view', [App\Http\Controllers\SuratController::class, 'download'])->name('surat.view');

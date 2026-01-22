@@ -20,10 +20,8 @@ class SuratPdfGenerator
             // Get village data from desa.json or session
             $villageData = self::getVillageData();
 
-            // Template Selection
-            // Uses unified 'universal' template for all types to ensure consistency.
-            // The universal.blade.php handles specific sections based on $surat->jenis_surat.
-            $viewName = 'surat.templates.universal';
+            // Template Selection (Organized by Category)
+            $viewName = self::selectTemplate($surat->jenis_surat);
 
             // Use the official logo-desa.png from public/images
             $logoBase64 = null;
@@ -112,6 +110,12 @@ class SuratPdfGenerator
                 }
             }
 
+            // Check if GD is required but missing (DomPDF needs it for images)
+            // This check must happen BEFORE rendering the HTML and generating PDF
+            if (!extension_loaded('gd') && !empty($logoBase64)) {
+                throw new \Exception('PHP GD extension is required to process the logo in PDFs. Please enable it in php.ini and restart Apache.');
+            }
+
             // Render HTML template (pass logo_base64 and parsed data to views)
             $html = View::make($viewName, [
                 'surat' => $surat,
@@ -126,11 +130,6 @@ class SuratPdfGenerator
                 ->setPaper('a4')
                 ->setOption('isHtml5ParserEnabled', true)
                 ->setOption('isRemoteEnabled', true);
-
-            // Check if GD is required but missing (DomPDF needs it for images)
-            if (!extension_loaded('gd') && !empty($logoBase64)) {
-                throw new \Exception('PHP GD extension is required to process the logo in PDFs. Please enable it in php.ini and restart Apache.');
-            }
 
             // Create filename and save directly to public/storage/surat/
             $filename = 'surat_' . $surat->id . '_' . time() . '.pdf';
@@ -183,5 +182,27 @@ class SuratPdfGenerator
                 'provinsi' => 'Jawa Timur',
             ];
         }
+    }
+
+    /**
+     * Select template based on surat type
+     * Maps jenis_surat to appropriate template path
+     */
+    private static function selectTemplate(string $jenisSurat): string
+    {
+        // Mapping jenis surat ke template
+        $templateMap = [
+            'Surat Keterangan Domisili' => 'surat.templates.domisili',
+            'Surat Keterangan Pindah' => 'surat.templates.pindah',
+            'Surat Keterangan Usaha' => 'surat.templates.usaha',
+            'Surat Keterangan Tidak Mampu' => 'surat.templates.tidak_mampu',
+            'Surat Keterangan Agama' => 'surat.templates.religious',
+            'Surat Keterangan Kelakuan Baik' => 'surat.templates.skck',
+            'SKCK' => 'surat.templates.skck',
+            'Surat Keterangan Kelahiran' => 'surat.templates.kelahiran',
+        ];
+
+        // Return mapped template or fallback to surat-standar
+        return $templateMap[$jenisSurat] ?? 'surat.templates.surat-standar';
     }
 }

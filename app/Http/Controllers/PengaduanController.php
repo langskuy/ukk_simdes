@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Pengaduan;
-use App\Models\ActivityLog;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
 
@@ -47,15 +46,6 @@ class PengaduanController extends Controller
             'isi' => $data['isi'],
             'lampiran' => $path,
             'status' => 'baru',
-        ]);
-
-        // Create Local Activity Log
-        ActivityLog::create([
-            'user_id' => auth()->id(),
-            'activity_type' => 'laporan',
-            'description' => "Mengirim pengaduan: {$pengaduan->judul}",
-            'ip_address' => request()->ip(),
-            'user_agent' => request()->userAgent(),
         ]);
 
         return redirect()->route('pengaduan.thanks');
